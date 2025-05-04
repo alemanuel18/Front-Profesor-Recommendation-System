@@ -31,7 +31,7 @@ const Dashboard = () => {
 
                     <div className="flex justify-center">
                         <button
-                            onClick={() => navigate('/Materias')}
+                            onClick={() => navigate('/cursos')}
                             className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors duration-300"
                         >
                             Asignarse
