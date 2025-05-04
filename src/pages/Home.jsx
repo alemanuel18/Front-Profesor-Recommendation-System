@@ -1,37 +1,46 @@
 import React from 'react';
 import Sidebar from '../Components/Sidebar';
 import Header from '../Components/Header';
+import Card_Estudiante from '../Components/Cards/Card_Estudiante';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex-1">
-        <Header />
-        <div className="p-8">
-          <h2 className="text-2xl font-semibold mb-4">Asignación de Cursos</h2>
-          <div className="border p-6 rounded shadow bg-white">
-            <p><strong>Carnet:</strong> 24678</p>
-            <p><strong>Estudiante:</strong> JEREZ MELGAR, ALEJANDRO MANUEL</p>
-            <p><strong>Carrera:</strong> 7010 - LICENCIATURA EN INGENIERÍA EN CIENCIA DE LA COMPUTACIÓN Y TECNOLOGÍAS DE LA INFORMACIÓN</p>
-            <p><strong>Pensum:</strong> RENOVACIÓN CURRICULAR 2022</p>
-            <p><strong>Prom. ciclo anterior:</strong> 90</p>
-            <p><strong>Grado:</strong> 2</p>
-            <p><strong>Carga máxima:</strong> Puede asignarse un máximo de 8 cursos</p>
-          </div>
-          <button
-            onClick={() => navigate('/cursos')}
-            className="bg-green-500 text-white px-6 py-3 mt-6 rounded text-lg"
-          >
-            Asignarse
-          </button>
+    return (
+        <div className="flex">
+            <Sidebar Name="JEREZ MELGAR, ALEJANDRO MANUEL"/>
+            <div className="ml-64 flex-1 w-full">
+                <Header />
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold text-teal-600 border-b-2 border-teal-500 pb-2 mb-10">
+                        Asignación de Cursos
+                    </h1>
+
+                    <div className="flex justify-center mt-8">
+                        <Card_Estudiante
+                            Carne="2023-12345"
+                            Name="JEREZ MELGAR, ALEJANDRO MANUEL"
+                            Carrera="7010 - LICENCIATURA EN INGENIERÍA EN CIENCIA DE LA COMPUTACIÓN Y TECNOLOGÍAS DE LA INFORMACIÓN"
+                            Pensum="RENOVACIÓN CURRICULAR 2022"
+                            Promedio_Ciclo_Anterior="90"
+                            Grado="2"
+                            Carga_MAX="Puede asignarse un máximo de 8 cursos"
+                        />
+                    </div>
+
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => navigate('/Materias')}
+                            className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors duration-300"
+                        >
+                            Asignarse
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Dashboard;
