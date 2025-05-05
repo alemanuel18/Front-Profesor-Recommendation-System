@@ -10,11 +10,14 @@ const CourseList = () => {
 
   return (
     <div className="flex">
-      <Sidebar />
-      <div className="flex-1">
+      <Sidebar Name="JEREZ MELGAR, ALEJANDRO MANUEL" />
+      <div className="ml-64 flex-1 w-full">
         <Header />
         <div className="p-8">
-          <h2 className="text-2xl font-semibold mb-4">Asignación de Cursos</h2>
+          <h1 className="text-3xl font-bold text-teal-600 border-b-2 border-teal-500 pb-2 mb-10">
+            Asignación de Cursos
+          </h1>
+
           {courses.map((course, index) => (
             <button
               key={index}
@@ -24,6 +27,7 @@ const CourseList = () => {
               {course}
             </button>
           ))}
+
         </div>
       </div>
     </div>
