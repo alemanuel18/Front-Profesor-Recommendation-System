@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const CourseList = () => {
   const navigate = useNavigate();
 
-  const courses = ['Calculo 1', 'Fisica 1', 'Estadística 1'];
+  const courses = ['Calculo 1', 'Álgebra Lineal 1', 'Estadística 1'];
 
   return (
     <div className="flex">
