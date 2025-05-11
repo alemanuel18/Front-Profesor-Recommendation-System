@@ -3,22 +3,12 @@ import Sidebar from '../Components/Sidebar';
 import Header from '../Components/Header';
 import Card_Estudiante from '../Components/Cards/Card_Estudiante';
 import { useNavigate } from 'react-router-dom';
+import { useStudent } from '../context/StudentContext';
 
-const Dashboard = () => {
+const Home = () => {
     const navigate = useNavigate();
+    const studentData = useStudent();
     
-    // Datos del estudiante
-    const studentData = {
-        id: "1",
-        carne: "2023-12345",
-        name: "JEREZ MELGAR, ALEJANDRO MANUEL",
-        carrera: "7010 - LICENCIATURA EN INGENIERÍA EN CIENCIA DE LA COMPUTACIÓN Y TECNOLOGÍAS DE LA INFORMACIÓN",
-        pensum: "RENOVACIÓN CURRICULAR 2022",
-        promedioCicloAnterior: "90",
-        grado: "2",
-        cargaMaxima: "Puede asignarse un máximo de 8 cursos"
-    };
-
     return (
         <div className="flex">
             <Sidebar Name={studentData.name}/>
@@ -56,4 +46,4 @@ const Dashboard = () => {
     );
 };
 
-export default Dashboard;
+export default Home;

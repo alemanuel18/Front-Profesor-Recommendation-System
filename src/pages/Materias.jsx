@@ -2,9 +2,11 @@ import React from 'react';
 import Sidebar from '../Components/Sidebar';
 import Header from '../Components/Header';
 import { useNavigate } from 'react-router-dom';
+import { useStudent } from '../context/StudentContext';
 
 const CourseList = () => {
   const navigate = useNavigate();
+  const studentData = useStudent();
 
   const courses = [
     { id: 1, name: 'Calculo 1'},
@@ -14,12 +16,14 @@ const CourseList = () => {
 
   // Función para navegar con el nombre del curso
   const handleCourseSelect = (course) => {
-    navigate(`/cursos/${course.id}`, { state: { courseName: course.name } });
+    navigate(`/cursos/${course.id}`, { 
+      state: { courseName: course.name }
+    });
   };
 
   return (
     <div className="flex">
-      <Sidebar Name="JEREZ MELGAR, ALEJANDRO MANUEL" />
+      <Sidebar Name={studentData.name} />
       <div className="ml-64 flex-1 w-full">
         <Header />
         <div className="p-8">
