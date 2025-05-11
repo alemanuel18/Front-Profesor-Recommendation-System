@@ -6,10 +6,22 @@ import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    
+    // Datos del estudiante
+    const studentData = {
+        id: "1",
+        carne: "2023-12345",
+        name: "JEREZ MELGAR, ALEJANDRO MANUEL",
+        carrera: "7010 - LICENCIATURA EN INGENIERÍA EN CIENCIA DE LA COMPUTACIÓN Y TECNOLOGÍAS DE LA INFORMACIÓN",
+        pensum: "RENOVACIÓN CURRICULAR 2022",
+        promedioCicloAnterior: "90",
+        grado: "2",
+        cargaMaxima: "Puede asignarse un máximo de 8 cursos"
+    };
 
     return (
         <div className="flex">
-            <Sidebar Name="JEREZ MELGAR, ALEJANDRO MANUEL"/>
+            <Sidebar Name={studentData.name}/>
             <div className="ml-64 flex-1 w-full">
                 <Header />
                 <div className="p-8">
@@ -19,13 +31,14 @@ const Dashboard = () => {
 
                     <div className="flex justify-center mt-8">
                         <Card_Estudiante
-                            Carne="2023-12345"
-                            Name="JEREZ MELGAR, ALEJANDRO MANUEL"
-                            Carrera="7010 - LICENCIATURA EN INGENIERÍA EN CIENCIA DE LA COMPUTACIÓN Y TECNOLOGÍAS DE LA INFORMACIÓN"
-                            Pensum="RENOVACIÓN CURRICULAR 2022"
-                            Promedio_Ciclo_Anterior="90"
-                            Grado="2"
-                            Carga_MAX="Puede asignarse un máximo de 8 cursos"
+                            id={studentData.id}
+                            Carne={studentData.carne}
+                            Name={studentData.name}
+                            Carrera={studentData.carrera}
+                            Pensum={studentData.pensum}
+                            Promedio_Ciclo_Anterior={studentData.promedioCicloAnterior}
+                            Grado={studentData.grado}
+                            Carga_MAX={studentData.cargaMaxima}
                         />
                     </div>
 

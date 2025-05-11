@@ -6,7 +6,16 @@ import { useNavigate } from 'react-router-dom';
 const CourseList = () => {
   const navigate = useNavigate();
 
-  const courses = ['Calculo 1', 'Álgebra Lineal 1', 'Estadística 1'];
+  const courses = [
+    { id: 1, name: 'Calculo 1'},
+    { id: 2, name: 'Álgebra Lineal 1'},
+    { id: 3, name: 'Estadística 1'}
+  ];
+
+  // Función para navegar con el nombre del curso
+  const handleCourseSelect = (course) => {
+    navigate(`/cursos/${course.id}`, { state: { courseName: course.name } });
+  };
 
   return (
     <div className="flex">
@@ -18,13 +27,13 @@ const CourseList = () => {
             Asignación de Cursos
           </h1>
 
-          {courses.map((course, index) => (
+          {courses.map((course) => (
             <button
-              key={index}
-              onClick={() => navigate(`/cursos/${index}`)}
-              className="block bg-gray-200 p-4 mb-4 w-full text-left rounded"
+              key={course.id}
+              onClick={() => handleCourseSelect(course)}
+              className="block bg-gray-200 p-4 mb-4 w-full text-left rounded hover:bg-gray-300 transition-colors"
             >
-              {course}
+              {course.name}
             </button>
           ))}
 
