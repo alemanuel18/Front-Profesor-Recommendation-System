@@ -1,12 +1,21 @@
-# React + Vite
+# Front-Profesor-Recommendation-System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Instalar node.js
 
-Currently, two official plugins are available:
+Es necesario de instalar node.js para poder ver/modificar/correr el proyecto.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Ir a la pagina de node.js: https://nodejs.org/en 
+2. Descargar node.js
+3. Instalar node.js siguiendo los pasos que indica.
+4. luego de la instalación verificar que esta se realizase de manera exitosa. Abriendo el CMD como administrador y correr el siguiente comando. 
 
-## Expanding the ESLint configuration
+- node -v
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Correr el proyecto
+
+- npm run dev
+
+## Iniciar Secion Login
+
+- Email: estudiante@uvg.edu.gt
+- Contraseña: password123
