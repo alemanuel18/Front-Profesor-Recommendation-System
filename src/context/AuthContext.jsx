@@ -2,10 +2,12 @@
 // @ File Name : AuthContext.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
+// @ Modified : 11/05/2025
 //
 
 // Este archivo define el contexto global para la autenticación de usuarios.
 // Proporciona un proveedor y hooks personalizados para gestionar la autenticación en toda la aplicación.
+// Incluye soporte para roles de usuario (estudiante/admin)
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }) => {
           // Valores simulados, en producción vendrían del backend
           id: localStorage.getItem('userId'),
           name: localStorage.getItem('userName'),
+          role: localStorage.getItem('userRole') || 'student', // Nuevo campo para el rol
         });
       }
       
@@ -51,12 +54,29 @@ export const AuthProvider = ({ children }) => {
         const userData = {
           id: "1",
           name: "JEREZ MELGAR, ALEJANDRO MANUEL",
+          role: "student", // Rol de estudiante
         };
         
         // Guardar datos en localStorage
         localStorage.setItem('authToken', 'fake-jwt-token');
         localStorage.setItem('userId', userData.id);
         localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userRole', userData.role);
+        
+        setCurrentUser(userData);
+        return true;
+      } else if (credentials.email === "admin@uvg.edu.gt" && credentials.password === "admin123") {
+        const userData = {
+          id: "2",
+          name: "ADMINISTRADOR UVG",
+          role: "admin", // Rol de administrador
+        };
+        
+        // Guardar datos en localStorage
+        localStorage.setItem('authToken', 'fake-jwt-token-admin');
+        localStorage.setItem('userId', userData.id);
+        localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userRole', userData.role);
         
         setCurrentUser(userData);
         return true;
@@ -74,7 +94,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
     setCurrentUser(null);
+  };
+
+  // Verificar si el usuario tiene un rol específico
+  const hasRole = (role) => {
+    return currentUser?.role === role;
   };
 
   // Valor del contexto que se proporcionará
@@ -82,7 +108,9 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     login,
     logout,
-    loading
+    loading,
+    isAdmin: () => hasRole('admin'),
+    isStudent: () => hasRole('student'),
   };
 
   return (

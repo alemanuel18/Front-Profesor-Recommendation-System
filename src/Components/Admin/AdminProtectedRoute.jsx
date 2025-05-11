@@ -1,18 +1,18 @@
 // @ Front-Profesor-Recommendation-System
-// @ File Name : ProtectedRoute.jsx
+// @ File Name : AdminProtectedRoute.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
 //
 
-// Este componente protege las rutas que requieren autenticación.
-// Redirige a los usuarios no autenticados a la página de login.
+// Este componente protege las rutas que requieren autenticación y rol de administrador.
+// Redirige a los usuarios no autenticados o sin permisos a la página correspondiente.
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+const AdminProtectedRoute = ({ children }) => {
+  const { currentUser, loading, isAdmin } = useAuth();
   
   // Si aún está cargando, no mostrar nada
   if (loading) {
@@ -28,8 +28,13 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
   
-  // Si hay usuario autenticado, mostrar la ruta protegida
+  // Si el usuario no es administrador, redirigir a la página principal
+  if (!isAdmin()) {
+    return <Navigate to="/" />;
+  }
+  
+  // Si hay usuario autenticado y es admin, mostrar la ruta protegida
   return children;
 };
 
-export default ProtectedRoute;
+export default AdminProtectedRoute;
