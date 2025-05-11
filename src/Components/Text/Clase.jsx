@@ -1,3 +1,12 @@
+// @ Front-Profesor-Recommendation-System
+// @ File Name : Clase.jsx
+// @ Date : 11/05/2025
+// @ Author : Alejandro Manuel Jerez Melgar 24678
+//
+
+// Este archivo define el componente Clase.
+// Representa un encabezado que muestra el nombre del curso seleccionado.
+
 import React from 'react';
 import PropTypes from 'prop-types';
 

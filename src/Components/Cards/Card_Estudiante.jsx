@@ -1,18 +1,29 @@
+// @ Front-Profesor-Recommendation-System
+// @ File Name : Card_Estudiante.jsx
+// @ Date : 11/05/2025
+// @ Author : Alejandro Manuel Jerez Melgar 24678
+//
+
+// Este archivo define el componente Card_Estudiante.
+// Representa una tarjeta que muestra información detallada del estudiante.
+// La información se recibe como propiedades y se renderiza en un diseño estilizado.
+
 import React from 'react';
 import PropTypes from 'prop-types';
 
 const Card_Estudiante = ({ 
-    id,
-    Carne, 
-    Name, 
-    Carrera, 
-    Pensum, 
-    Promedio_Ciclo_Anterior, 
-    Grado, 
-    Carga_MAX 
+    id, // ID único del estudiante
+    Carne, // Carnet del estudiante
+    Name, // Nombre completo del estudiante
+    Carrera, // Carrera del estudiante
+    Pensum, // Pensum del estudiante
+    Promedio_Ciclo_Anterior, // Promedio del ciclo anterior
+    Grado, // Grado actual del estudiante
+    Carga_MAX // Carga máxima permitida
 }) => (
     <div className="w-full max-w-4xl p-8 bg-gray-100 border border-gray-200 rounded-lg mb-6">
         <div className="space-y-3">
+            {/* Renderiza cada propiedad del estudiante */}
             <p><strong className="font-bold">Carnet: </strong>{Carne}</p>
             <p><strong className="font-bold">Estudiante: </strong>{Name}</p>
             <p><strong className="font-bold">Carrera: </strong>{Carrera}</p>
@@ -24,7 +35,7 @@ const Card_Estudiante = ({
     </div>
 );
 
-//Validación de propiedades
+// Validación de propiedades para garantizar que se pasen los datos correctos
 Card_Estudiante.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     Carne: PropTypes.string.isRequired,
