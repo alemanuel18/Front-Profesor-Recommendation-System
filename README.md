@@ -15,7 +15,12 @@ Es necesario de instalar node.js para poder ver/modificar/correr el proyecto.
 
 - npm run dev
 
-## Iniciar Secion Login
+## Iniciar Secion en Login (Estudiante)
 
 - Email: estudiante@uvg.edu.gt
 - Contraseña: password123
+
+## Iniciar Secion en Login (Admin)
+
+- Email: admin@uvg.edu.gt
+- Contraseña: admin123

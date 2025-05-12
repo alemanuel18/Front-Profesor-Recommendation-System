@@ -10,10 +10,10 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../Components/Header';
-import { useProfessor } from '../context/ProfessorContext';
-import AdminSidebar from '../Components/Admin/AdminSidebar';
-import { useAuth } from '../context/AuthContext';
+import Header from '../../Components/Header';
+import { useProfessor } from '../../context/ProfessorContext';
+import AdminSidebar from '../../Components/Admin/AdminSidebar';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminProfessors = () => {
   const navigate = useNavigate();
