@@ -33,34 +33,7 @@ const AdminSidebar = () => {
           </div>
         </div>
         
-        <ul className="space-y-2 font-medium">
-          <li>
-            <Link to="/admin/dashboard" className={`flex items-center p-2 rounded-lg hover:bg-teal-700 group ${isActive('/admin/dashboard')}`}>
-              <span className="ms-3">Dashboard</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/admin/professors" className={`flex items-center p-2 rounded-lg hover:bg-teal-700 group ${isActive('/admin/professors')}`}>
-              <span className="ms-3">Profesores</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/admin/students" className={`flex items-center p-2 rounded-lg hover:bg-teal-700 group ${isActive('/admin/students')}`}>
-              <span className="ms-3">Estudiantes</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/admin/courses" className={`flex items-center p-2 rounded-lg hover:bg-teal-700 group ${isActive('/admin/courses')}`}>
-              <span className="ms-3">Cursos</span>
-            </Link>
-          </li>
-        </ul>
-        
-        <div className="pt-4 mt-4 space-y-2 border-t border-teal-700 font-medium">
-          <Link to="/" className="flex items-center p-2 rounded-lg hover:bg-teal-700 group">
-            <span className="ms-3">Ver Portal de Estudiantes</span>
-          </Link>
-        </div>
+
       </div>
     </aside>
   );

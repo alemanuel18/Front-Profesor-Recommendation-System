@@ -8,24 +8,34 @@
 // Contiene la estructura principal de la interfaz de usuario para la asignación de cursos.
 // Incluye componentes como Sidebar, Header y Card_Estudiante para mostrar información del estudiante.
 
-import React from 'react';
+
+import { useAuth } from '../context/AuthContext';
 import Sidebar from '../Components/Sidebar';
+import AdminSidebar from '../Components/Admin/AdminSidebar';
 import Header from '../Components/Header';
 import Card_Estudiante from '../Components/Cards/Card_Estudiante';
 import { useNavigate } from 'react-router-dom';
 import { useStudent } from '../context/StudentContext';
 
 const Home = () => {
+    const { currentUser, isAdmin } = useAuth();
     // Hook para navegar entre rutas
     const navigate = useNavigate();
 
     // Obtiene los datos del estudiante desde el contexto global
     const studentData = useStudent();
-    
+
+    // Determinar qué componente lateral mostrar según el rol
+    const SidebarComponent = isAdmin() ? (
+        <AdminSidebar />
+    ) : (
+        <Sidebar Name={studentData.name} />
+    );
+
     return (
         <div className="flex">
-            {/* Sidebar muestra el nombre del estudiante */}
-            <Sidebar Name={studentData.name}/>
+
+            {SidebarComponent}
             <div className="ml-64 flex-1 w-full">
                 {/* Header muestra el encabezado de la página */}
                 <Header />

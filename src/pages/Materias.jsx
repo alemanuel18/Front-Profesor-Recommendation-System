@@ -9,12 +9,22 @@
 // Incluye componentes como Sidebar y Header.
 
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import Sidebar from '../Components/Sidebar';
+import AdminSidebar from '../Components/Admin/AdminSidebar';
 import Header from '../Components/Header';
 import { useNavigate } from 'react-router-dom';
 import { useStudent } from '../context/StudentContext';
 
 const CourseList = () => {
+
+  const { currentUser, isAdmin } = useAuth();
+
+  const SidebarComponent = isAdmin() ? (
+    <AdminSidebar />
+  ) : (
+    <Sidebar Name={studentData.name} />
+  );
   // Hook para navegar entre rutas
   const navigate = useNavigate();
 
@@ -23,14 +33,14 @@ const CourseList = () => {
 
   // Lista de cursos disponibles (simulada)
   const courses = [
-    { id: 1, name: 'Calculo 1'},
-    { id: 2, name: 'Álgebra Lineal 1'},
-    { id: 3, name: 'Estadística 1'}
+    { id: 1, name: 'Calculo 1' },
+    { id: 2, name: 'Álgebra Lineal 1' },
+    { id: 3, name: 'Estadística 1' }
   ];
 
   // Función para manejar la selección de un curso
   const handleCourseSelect = (course) => {
-    navigate(`/cursos/${course.id}`, { 
+    navigate(`/cursos/${course.id}`, {
       state: { courseName: course.name } // Pasa el nombre del curso como estado de navegación
     });
   };
@@ -38,7 +48,7 @@ const CourseList = () => {
   return (
     <div className="flex">
       {/* Sidebar muestra el nombre del estudiante */}
-      <Sidebar Name={studentData.name} />
+      {SidebarComponent}
       <div className="ml-64 flex-1 w-full">
         {/* Header muestra el encabezado de la página */}
         <Header />

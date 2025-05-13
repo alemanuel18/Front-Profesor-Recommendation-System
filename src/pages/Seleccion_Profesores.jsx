@@ -96,8 +96,10 @@ const Seleccion_Profesores = () => {
                 <Header />
                 <div className="container mx-auto p-8">
                     <Clase id={cursoId} Class={courseName} />
-                    
+
+
                     {/* Barra de búsqueda */}
+                    {/* Esto es solo por quieres agregarlo, si no da tiempo echatelo Marcelo ;) */}
                     <div className="mb-8">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -114,18 +116,7 @@ const Seleccion_Profesores = () => {
                             />
                         </div>
                     </div>
-                    
-                    {/* Filtros aplicados */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        <span className="bg-teal-100 text-teal-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            Curso: {courseName}
-                        </span>
-                        {searchTerm && (
-                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                Búsqueda: {searchTerm}
-                            </span>
-                        )}
-                    </div>
+
 
                     {/* Mostrar mensaje si no hay profesores */}
                     {filteredProfessors.length === 0 && (
