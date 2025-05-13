@@ -2,19 +2,40 @@
 // @ File Name : AdminProtectedRoute.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este componente protege las rutas que requieren autenticación y rol de administrador.
-// Redirige a los usuarios no autenticados o sin permisos a la página correspondiente.
+/**
+ * Componente AdminProtectedRoute
+ * 
+ * Este componente implementa una capa de seguridad para rutas administrativas.
+ * Características:
+ * - Verifica autenticación del usuario
+ * - Valida el rol de administrador
+ * - Maneja estados de carga
+ * - Implementa redirecciones según permisos
+ * 
+ * Flujo de verificación:
+ * 1. Verifica si está cargando -> Muestra spinner
+ * 2. Verifica si hay usuario -> Redirige a login si no
+ * 3. Verifica si es admin -> Redirige a inicio si no
+ * 4. Permite acceso si pasa todas las verificaciones
+ */
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+/**
+ * Componente de orden superior para proteger rutas administrativas
+ * @param {Object} props - Propiedades del componente
+ * @param {React.ReactNode} props.children - Componentes hijos a renderizar si la autenticación es exitosa
+ */
 const AdminProtectedRoute = ({ children }) => {
+  // ===== HOOKS Y CONTEXTO =====
   const { currentUser, loading, isAdmin } = useAuth();
   
-  // Si aún está cargando, no mostrar nada
+  // ===== RENDERIZADO CONDICIONAL =====
+  
+  // Estado de carga - Muestra spinner mientras verifica
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -23,17 +44,17 @@ const AdminProtectedRoute = ({ children }) => {
     );
   }
   
-  // Si no hay usuario autenticado, redirigir al login
+  // Verificación de autenticación
   if (!currentUser) {
     return <Navigate to="/login" />;
   }
   
-  // Si el usuario no es administrador, redirigir a la página principal
+  // Verificación de permisos de administrador
   if (!isAdmin()) {
     return <Navigate to="/" />;
   }
   
-  // Si hay usuario autenticado y es admin, mostrar la ruta protegida
+  // Usuario autenticado y con permisos - Renderiza el contenido protegido
   return children;
 };
 

@@ -2,19 +2,29 @@
 // @ File Name : ProtectedRoute.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este componente protege las rutas que requieren autenticación.
-// Redirige a los usuarios no autenticados a la página de login.
+/**
+ * Componente ProtectedRoute
+ * 
+ * Este componente implementa la protección de rutas en la aplicación.
+ * Funcionalidad:
+ * - Verifica si existe un usuario autenticado
+ * - Redirige a usuarios no autenticados a la página de login
+ * - Muestra un indicador de carga durante la verificación
+ * - Renderiza el contenido protegido solo para usuarios autenticados
+ */
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+  // ===== HOOKS Y CONTEXTO =====
+  const { currentUser, loading } = useAuth(); // Obtiene el estado de autenticación
   
-  // Si aún está cargando, no mostrar nada
+  // ===== RENDERIZADO CONDICIONAL =====
+  
+  // Muestra spinner durante la verificación de autenticación
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -23,12 +33,12 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  // Si no hay usuario autenticado, redirigir al login
+  // Redirige a login si no hay usuario autenticado
   if (!currentUser) {
     return <Navigate to="/login" />;
   }
   
-  // Si hay usuario autenticado, mostrar la ruta protegida
+  // Renderiza el contenido protegido si el usuario está autenticado
   return children;
 };
 

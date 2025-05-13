@@ -2,16 +2,30 @@
 // @ File Name : ProfessorDetailCard.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este archivo define el componente ProfessorDetailCard.
-// Representa una tarjeta que muestra información detallada de un profesor.
+/**
+ * Componente ProfessorDetailCard
+ * 
+ * Este componente representa una tarjeta detallada con toda la información
+ * de un profesor, incluyendo datos personales, profesionales y académicos.
+ * Características:
+ * - Vista detallada de la información del profesor
+ * - Diseño responsivo con grid layout
+ * - Sistema visual de calificación
+ * - Manejo de estados sin datos
+ * - Organización clara de la información
+ */
 
 import React from 'react';
 import PropTypes from 'prop-types';
 
+/**
+ * Renderiza una tarjeta con información detallada del profesor
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.professor - Datos completos del profesor
+ */
 const ProfessorDetailCard = ({ professor }) => {
-  // Si no hay datos del profesor, mostrar mensaje
+  // Manejo de caso sin datos
   if (!professor) {
     return (
       <div className="w-full max-w-3xl p-8 bg-white border border-gray-200 rounded-lg shadow-md">
@@ -22,14 +36,16 @@ const ProfessorDetailCard = ({ professor }) => {
 
   return (
     <div className="w-full max-w-3xl bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
-      {/* Encabezado con imagen y nombre */}
+      {/* Encabezado con imagen y datos principales */}
       <div className="relative bg-teal-600 p-8 text-white">
         <div className="flex items-center">
+          {/* Imagen de perfil */}
           <img 
             className="w-24 h-24 rounded-full border-4 border-white shadow-lg" 
             src={professor.image || "/api/placeholder/200/200"} 
             alt={`${professor.name} profile`} 
           />
+          {/* Información básica */}
           <div className="ml-6">
             <h2 className="text-2xl font-bold">{professor.name}</h2>
             <p className="text-teal-100">{professor.degree || professor.exp}</p>
@@ -37,11 +53,12 @@ const ProfessorDetailCard = ({ professor }) => {
         </div>
       </div>
       
-      {/* Cuerpo con información detallada */}
+      {/* Cuerpo de la tarjeta - Información detallada */}
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Columna izquierda */}
+          {/* Columna izquierda - Información de contacto y evaluación */}
           <div className="space-y-4">
+            {/* Sección de información de contacto */}
             <div>
               <h3 className="text-lg font-semibold text-teal-700 border-b border-gray-200 pb-2 mb-2">
                 Información de Contacto
@@ -51,11 +68,13 @@ const ProfessorDetailCard = ({ professor }) => {
               <p><span className="font-medium">Teléfono:</span> {professor.phone}</p>
             </div>
             
+            {/* Sección de evaluación */}
             <div>
               <h3 className="text-lg font-semibold text-teal-700 border-b border-gray-200 pb-2 mb-2">
                 Evaluación
               </h3>
               <div className="flex items-center">
+                {/* Sistema visual de calificación con estrellas */}
                 <div className="flex items-center mr-2">
                   {[...Array(5)].map((_, i) => (
                     <svg 
@@ -74,8 +93,9 @@ const ProfessorDetailCard = ({ professor }) => {
             </div>
           </div>
           
-          {/* Columna derecha */}
+          {/* Columna derecha - Especialidades y cursos */}
           <div className="space-y-4">
+            {/* Sección de especialidades */}
             <div>
               <h3 className="text-lg font-semibold text-teal-700 border-b border-gray-200 pb-2 mb-2">
                 Especialidades
@@ -87,6 +107,7 @@ const ProfessorDetailCard = ({ professor }) => {
               </ul>
             </div>
             
+            {/* Sección de cursos */}
             <div>
               <h3 className="text-lg font-semibold text-teal-700 border-b border-gray-200 pb-2 mb-2">
                 Cursos que Imparte
@@ -104,7 +125,7 @@ const ProfessorDetailCard = ({ professor }) => {
   );
 };
 
-// Validación de propiedades
+// Validación detallada de propiedades
 ProfessorDetailCard.propTypes = {
   professor: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

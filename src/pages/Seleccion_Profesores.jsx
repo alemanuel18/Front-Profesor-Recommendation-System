@@ -2,11 +2,17 @@
 // @ File Name : Seleccion_Profesores.jsx
 // @ Date : 12/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este archivo define la página de selección de profesores.
-// Muestra una lista de todos los profesores disponibles para un curso seleccionado.
-// Incluye tanto la visualización para estudiantes como para administradores según el rol del usuario.
+/**
+ * Componente Seleccion_Profesores
+ * 
+ * Este componente implementa la página de selección de profesores para un curso específico.
+ * Características principales:
+ * - Muestra una lista filtrable de profesores disponibles
+ * - Permite búsqueda por nombre o especialidad
+ * - Implementa visualización diferenciada para estudiantes y administradores
+ * - Maneja la carga y filtrado dinámico de datos
+ */
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -21,17 +27,19 @@ import Sidebar from '../Components/Sidebar';
 import { useStudent } from '../context/StudentContext';
 
 const Seleccion_Profesores = () => {
-    const { cursoId } = useParams();
-    const { professors, loading } = useProfessor();
-    const { currentUser, isAdmin } = useAuth();
-    const studentData = useStudent();
-    const [courseName, setCourseName] = useState("");
-    const [filteredProfessors, setFilteredProfessors] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    // ===== HOOKS Y ESTADOS =====
+    const { cursoId } = useParams(); // Obtiene el ID del curso de la URL
+    const { professors, loading } = useProfessor(); // Datos y estado de carga de profesores
+    const { currentUser, isAdmin } = useAuth(); // Información de autenticación
+    const studentData = useStudent(); // Datos del estudiante
+    const [courseName, setCourseName] = useState(""); // Nombre del curso seleccionado
+    const [filteredProfessors, setFilteredProfessors] = useState([]); // Lista filtrada de profesores
+    const [searchTerm, setSearchTerm] = useState(""); // Término de búsqueda
 
-    // Simular obtención del nombre del curso según ID
+    // ===== EFECTOS =====
+    // Efecto para obtener el nombre del curso
     useEffect(() => {
-        // En una implementación real, esto vendría de una API
+        // Simulación de obtención del nombre del curso (en producción vendría de una API)
         const getCourseNameById = (id) => {
             const courses = {
                 "1": "Cálculo 1",
@@ -44,10 +52,10 @@ const Seleccion_Profesores = () => {
         setCourseName(getCourseNameById(cursoId));
     }, [cursoId]);
 
-    // Filtrar profesores por curso
+    // Efecto para filtrar profesores por curso
     useEffect(() => {
         if (professors.length > 0 && courseName) {
-            // Filtrar profesores que enseñan el curso seleccionado
+            // Filtra los profesores que imparten el curso seleccionado
             const filtered = professors.filter(professor => 
                 professor.courses && professor.courses.includes(courseName)
             );
@@ -55,9 +63,10 @@ const Seleccion_Profesores = () => {
         }
     }, [professors, courseName]);
 
-    // Filtrar profesores por término de búsqueda
+    // Efecto para filtrar profesores por término de búsqueda
     useEffect(() => {
         if (searchTerm.trim() !== "" && professors.length > 0) {
+            // Filtra por nombre o especialidad
             const filtered = professors.filter(professor =>
                 professor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (professor.specialties && professor.specialties.some(specialty => 
@@ -66,7 +75,7 @@ const Seleccion_Profesores = () => {
             );
             setFilteredProfessors(filtered);
         } else if (courseName) {
-            // Si no hay término de búsqueda, volver a filtrar solo por curso
+            // Si no hay término de búsqueda, muestra todos los profesores del curso
             const filtered = professors.filter(professor => 
                 professor.courses && professor.courses.includes(courseName)
             );
@@ -74,6 +83,8 @@ const Seleccion_Profesores = () => {
         }
     }, [searchTerm, professors, courseName]);
 
+    // ===== RENDERIZADO CONDICIONAL =====
+    // Mostrar indicador de carga mientras se obtienen los datos
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -82,24 +93,25 @@ const Seleccion_Profesores = () => {
         );
     }
 
-    // Determinar qué componente lateral mostrar según el rol
+    // Determinar qué barra lateral mostrar según el rol del usuario
     const SidebarComponent = isAdmin() ? (
         <AdminSidebar />
     ) : (
         <Sidebar Name={studentData.name} />
     );
 
+    // ===== RENDERIZADO DEL COMPONENTE =====
     return (
         <div className="flex">
+            {/* Barra lateral según el rol del usuario */}
             {SidebarComponent}
             <div className="ml-64 flex-1 w-full">
                 <Header />
                 <div className="container mx-auto p-8">
+                    {/* Componente que muestra el nombre del curso */}
                     <Clase id={cursoId} Class={courseName} />
 
-
                     {/* Barra de búsqueda */}
-                    {/* Esto es solo por quieres agregarlo, si no da tiempo echatelo Marcelo ;) */}
                     <div className="mb-8">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -117,18 +129,17 @@ const Seleccion_Profesores = () => {
                         </div>
                     </div>
 
-
-                    {/* Mostrar mensaje si no hay profesores */}
+                    {/* Mensaje cuando no hay profesores que coincidan con la búsqueda */}
                     {filteredProfessors.length === 0 && (
                         <div className="text-center py-10">
                             <p className="text-gray-500">No se encontraron profesores que coincidan con los criterios de búsqueda.</p>
                         </div>
                     )}
 
-                    {/* Grid de profesores */}
+                    {/* Grid de tarjetas de profesores */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProfessors.map((professor) => (
-                            // Mostrar un componente diferente según el rol del usuario
+                            // Renderiza un componente diferente según el rol del usuario
                             isAdmin() ? (
                                 <Card_Profesor_Admin
                                     key={professor.id}

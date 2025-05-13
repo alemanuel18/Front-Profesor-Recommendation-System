@@ -2,10 +2,17 @@
 // @ File Name : ProfessorDetails.jsx
 // @ Date : 12/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este archivo define la página de detalles de un profesor.
-// Muestra información completa de un profesor específico y opciones de administración.
+/**
+ * Componente ProfessorDetails
+ * 
+ * Este componente representa la página de detalles de un profesor específico.
+ * Características principales:
+ * - Muestra información detallada del profesor
+ * - Permite editar la información (solo administradores)
+ * - Muestra estadísticas y cursos asignados
+ * - Implementa controles de acceso basados en rol
+ */
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,13 +23,15 @@ import AdminSidebar from '../Components/Admin/AdminSidebar';
 import ProfessorDetailCard from '../Components/Cards/ProfessorDetailCard';
 
 const ProfessorDetails = () => {
-  const { professorId } = useParams();
-  const { getProfessorById, loading } = useProfessor();
-  const { isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const [professor, setProfessor] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  // ===== HOOKS Y ESTADOS =====
+  const { professorId } = useParams(); // Obtiene el ID del profesor de la URL
+  const { getProfessorById, loading } = useProfessor(); // Contexto de profesores
+  const { isAdmin } = useAuth(); // Verificación de rol de administrador
+  const navigate = useNavigate(); // Hook de navegación
+  const [professor, setProfessor] = useState(null); // Estado para datos del profesor
+  const [isEditing, setIsEditing] = useState(false); // Estado para modo de edición
 
+  // ===== EFECTOS =====
   // Cargar datos del profesor según ID
   useEffect(() => {
     if (professorId) {
@@ -38,16 +47,19 @@ const ProfessorDetails = () => {
     }
   }, [isAdmin, navigate]);
 
+  // ===== MANEJADORES DE EVENTOS =====
   // Manejar regreso a la lista de profesores
   const handleGoBack = () => {
     navigate('/admin/professors');
   };
 
-  // Manejar modo de edición (simplemente para la UI, no implementado completamente)
+  // Manejar modo de edición
   const toggleEditMode = () => {
     setIsEditing(!isEditing);
   };
 
+  // ===== RENDERIZADO CONDICIONAL =====
+  // Mostrar spinner de carga mientras se obtienen los datos
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -56,6 +68,7 @@ const ProfessorDetails = () => {
     );
   }
 
+  // ===== RENDERIZADO DEL COMPONENTE =====
   return (
     <div className="flex">
       <AdminSidebar />
@@ -77,6 +90,8 @@ const ProfessorDetails = () => {
                 Detalle del Profesor
               </h1>
             </div>
+            
+            {/* Botones de acción */}
             <div className="flex space-x-3">
               <button
                 onClick={toggleEditMode}
@@ -104,18 +119,21 @@ const ProfessorDetails = () => {
             {/* Tarjeta de detalles del profesor */}
             <ProfessorDetailCard professor={professor} />
             
-            {/* Sección de estadísticas (ejemplo visual) */}
+            {/* Sección de estadísticas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Estadística: Cursos Activos */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-teal-700 mb-2">Cursos Activos</h3>
                 <p className="text-3xl font-bold">{professor?.courses?.length || 0}</p>
               </div>
               
+              {/* Estadística: Estudiantes */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-teal-700 mb-2">Estudiantes</h3>
                 <p className="text-3xl font-bold">45</p>
               </div>
               
+              {/* Estadística: Evaluación Promedio */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-teal-700 mb-2">Evaluación Promedio</h3>
                 <div className="flex items-center">
@@ -128,6 +146,7 @@ const ProfessorDetails = () => {
                 </div>
               </div>
               
+              {/* Estadística: Años de Experiencia */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-teal-700 mb-2">Años de Experiencia</h3>
                 <p className="text-3xl font-bold">8</p>

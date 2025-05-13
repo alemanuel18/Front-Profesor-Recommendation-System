@@ -3,11 +3,17 @@
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
 // @ Modified : 11/05/2025
-//
 
-// Este archivo define el contexto global para la autenticación de usuarios.
-// Proporciona un proveedor y hooks personalizados para gestionar la autenticación en toda la aplicación.
-// Incluye soporte para roles de usuario (estudiante/admin)
+/**
+ * Contexto de Autenticación
+ * 
+ * Este archivo proporciona la gestión centralizada de autenticación para la aplicación.
+ * Características principales:
+ * - Manejo de sesión de usuario
+ * - Control de roles (estudiante/administrador)
+ * - Persistencia de sesión usando localStorage
+ * - Funciones de login/logout
+ */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
@@ -15,25 +21,22 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Estado para guardar información del usuario actual
-  const [currentUser, setCurrentUser] = useState(null);
-  // Estado para controlar si la autenticación está en proceso
-  const [loading, setLoading] = useState(true);
+  // ===== ESTADOS DEL CONTEXTO =====
+  const [currentUser, setCurrentUser] = useState(null); // Almacena datos del usuario actual
+  const [loading, setLoading] = useState(true); // Control del estado de carga inicial
 
-  // Simular la verificación del token al cargar la página
+  // ===== EFECTOS =====
   useEffect(() => {
+    // Verificar si existe una sesión activa al cargar la aplicación
     const checkUserSession = () => {
-      // Verificar si hay un token guardado en localStorage
       const token = localStorage.getItem('authToken');
       
       if (token) {
-        // En una implementación real, aquí verificaríamos el token con el backend
-        // Por ahora, simplemente consideramos que existe un usuario si hay token
+        // Recuperar datos de sesión del localStorage
         setCurrentUser({ 
-          // Valores simulados, en producción vendrían del backend
           id: localStorage.getItem('userId'),
           name: localStorage.getItem('userName'),
-          role: localStorage.getItem('userRole') || 'student', // Nuevo campo para el rol
+          role: localStorage.getItem('userRole') || 'student',
         });
       }
       
@@ -43,21 +46,25 @@ export const AuthProvider = ({ children }) => {
     checkUserSession();
   }, []);
 
-  // Función para iniciar sesión
+  // ===== FUNCIONES DE AUTENTICACIÓN =====
+  
+  /**
+   * Función de inicio de sesión
+   * Valida credenciales y establece la sesión del usuario
+   * @param {Object} credentials - Credenciales del usuario (email, password)
+   */
   const login = async (credentials) => {
     try {
-      // En producción, aquí haríamos una petición al backend
-      // Simulamos una respuesta exitosa para demostración
-      
-      // Validación simple (solo para demostración)
+      // Validación de credenciales (simulada)
       if (credentials.email === "estudiante@uvg.edu.gt" && credentials.password === "password123") {
+        // Datos de usuario estudiante
         const userData = {
           id: "1",
           name: "JEREZ MELGAR, ALEJANDRO MANUEL",
-          role: "student", // Rol de estudiante
+          role: "student",
         };
         
-        // Guardar datos en localStorage
+        // Persistir sesión en localStorage
         localStorage.setItem('authToken', 'fake-jwt-token');
         localStorage.setItem('userId', userData.id);
         localStorage.setItem('userName', userData.name);
@@ -66,13 +73,14 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(userData);
         return true;
       } else if (credentials.email === "admin@uvg.edu.gt" && credentials.password === "admin123") {
+        // Datos de usuario administrador
         const userData = {
           id: "2",
           name: "ADMINISTRADOR UVG",
-          role: "admin", // Rol de administrador
+          role: "admin",
         };
         
-        // Guardar datos en localStorage
+        // Persistir sesión en localStorage
         localStorage.setItem('authToken', 'fake-jwt-token-admin');
         localStorage.setItem('userId', userData.id);
         localStorage.setItem('userName', userData.name);
@@ -88,9 +96,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para cerrar sesión
+  /**
+   * Función de cierre de sesión
+   * Elimina todos los datos de sesión
+   */
   const logout = () => {
-    // Eliminar token y datos del usuario
+    // Limpiar datos de localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
@@ -98,29 +109,33 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
-  // Verificar si el usuario tiene un rol específico
+  /**
+   * Verifica si el usuario tiene un rol específico
+   * @param {string} role - Rol a verificar
+   * @returns {boolean} - true si el usuario tiene el rol especificado
+   */
   const hasRole = (role) => {
     return currentUser?.role === role;
   };
 
-  // Valor del contexto que se proporcionará
+  // Objeto con valores y funciones disponibles en el contexto
   const value = {
-    currentUser,
-    login,
-    logout,
-    loading,
-    isAdmin: () => hasRole('admin'),
-    isStudent: () => hasRole('student'),
+    currentUser,     // Datos del usuario actual
+    login,          // Función de inicio de sesión
+    logout,         // Función de cierre de sesión
+    loading,        // Estado de carga
+    isAdmin: () => hasRole('admin'),    // Verificador de rol admin
+    isStudent: () => hasRole('student'), // Verificador de rol estudiante
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!loading && children} {/* Renderiza los hijos solo cuando la carga inicial termina */}
     </AuthContext.Provider>
   );
 };
 
-// Hook personalizado para acceder al contexto de autenticación
+// Hook personalizado para usar el contexto de autenticación
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -2,17 +2,24 @@
 // @ File Name : ProfessorContext.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este archivo define el contexto global para los datos de profesores.
-// Proporciona un proveedor y un hook personalizado para acceder a los datos de profesores en toda la aplicación.
+/**
+ * Contexto de Profesores
+ * 
+ * Este archivo gestiona el estado global de los datos de profesores.
+ * Proporciona:
+ * - Acceso centralizado a la información de profesores
+ * - Funciones para obtener y filtrar profesores
+ * - Simulación de carga de datos (en producción sería una API)
+ */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Crear el contexto para datos de profesores
 const ProfessorContext = createContext();
 
-// Datos de profesores (simulados)
+// ===== DATOS DE PRUEBA =====
+// En producción, estos datos vendrían de una API
 const professorsData = [
   { 
     id: 1, 
@@ -52,14 +59,15 @@ const professorsData = [
   }
 ];
 
-// Proveedor del contexto
+// ===== PROVEEDOR DEL CONTEXTO =====
 export const ProfessorProvider = ({ children }) => {
+  // Estados para manejar los datos y la carga
   const [professors, setProfessors] = useState(professorsData);
   const [loading, setLoading] = useState(true);
 
-  // Simular carga de datos
+  // Efecto para simular la carga inicial de datos
   useEffect(() => {
-    // En un caso real, aquí se haría una llamada a una API
+    // En producción, aquí se haría una llamada a una API
     const fetchData = () => {
       setTimeout(() => {
         setProfessors(professorsData);
@@ -70,7 +78,11 @@ export const ProfessorProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  // Función para obtener un profesor por su ID
+  /**
+   * Obtiene un profesor específico por su ID
+   * @param {string|number} id - ID del profesor a buscar
+   * @returns {Object|null} - Datos del profesor o null si no se encuentra
+   */
   const getProfessorById = (id) => {
     const numId = parseInt(id, 10);
     return professors.find(prof => prof.id === numId) || null;
@@ -78,9 +90,9 @@ export const ProfessorProvider = ({ children }) => {
 
   // Valor del contexto que se proporcionará
   const value = {
-    professors,
-    loading,
-    getProfessorById
+    professors,       // Lista completa de profesores
+    loading,         // Estado de carga
+    getProfessorById // Función para buscar profesor por ID
   };
 
   return (

@@ -6,8 +6,7 @@
 
 // Este archivo representa la página principal del sistema de recomendación de profesores.
 // Contiene la estructura principal de la interfaz de usuario para la asignación de cursos.
-// Incluye componentes como Sidebar, Header y Card_Estudiante para mostrar información del estudiante.
-
+// Incluye componentes como Sidebar, AdminSidebar, Header y Card_Estudiante para mostrar información del estudiante o administrador.
 
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../Components/Sidebar';
@@ -18,23 +17,25 @@ import { useNavigate } from 'react-router-dom';
 import { useStudent } from '../context/StudentContext';
 
 const Home = () => {
+    // Obtiene el usuario actual y verifica si es administrador
     const { currentUser, isAdmin } = useAuth();
+
     // Hook para navegar entre rutas
     const navigate = useNavigate();
 
     // Obtiene los datos del estudiante desde el contexto global
     const studentData = useStudent();
 
-    // Determinar qué componente lateral mostrar según el rol
+    // Determina qué componente lateral mostrar según el rol del usuario
     const SidebarComponent = isAdmin() ? (
-        <AdminSidebar />
+        <AdminSidebar /> // Sidebar para administradores
     ) : (
-        <Sidebar Name={studentData.name} />
+        <Sidebar Name={studentData.name} /> // Sidebar para estudiantes
     );
 
     return (
         <div className="flex">
-
+            {/* Renderiza el componente lateral correspondiente */}
             {SidebarComponent}
             <div className="ml-64 flex-1 w-full">
                 {/* Header muestra el encabezado de la página */}

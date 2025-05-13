@@ -2,47 +2,68 @@
 // @ File Name : Card_Profesor_Admin.jsx
 // @ Date : 12/05/2025
 // @ Author : Alejandro Manuel Jerez Melgar 24678
-//
 
-// Este archivo define el componente Card_Profesor_Admin.
-// Representa una tarjeta que muestra información básica de un profesor para la interfaz de administrador,
-// con opción para acceder a los detalles completos del profesor.
+/**
+ * Componente Card_Profesor_Admin
+ * 
+ * Este componente representa una tarjeta de profesor en la vista de administrador.
+ * Características:
+ * - Muestra información detallada del profesor
+ * - Incluye calificación con visualización de estrellas
+ * - Muestra especialidades del profesor
+ * - Permite navegación a vista detallada
+ * - Diseño responsivo y con efectos visuales
+ */
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Renderiza una tarjeta de profesor con información detallada para administradores
+ * @param {Object} props - Propiedades del componente
+ * @param {string|number} props.id - ID único del profesor
+ * @param {string} props.name - Nombre del profesor
+ * @param {string} [props.image] - URL de la imagen del profesor
+ * @param {string} props.department - Departamento al que pertenece
+ * @param {number} props.rating - Calificación del profesor (0-5)
+ * @param {string[]} props.specialties - Lista de especialidades
+ */
 const Card_Profesor_Admin = ({ 
-    id, // ID único del profesor
-    name, // Nombre del profesor
-    image, // Imagen del profesor (opcional)
-    department, // Departamento al que pertenece el profesor
-    rating, // Calificación del profesor
-    specialties // Especialidades del profesor
+    id,
+    name,
+    image,
+    department,
+    rating,
+    specialties
 }) => {
     const navigate = useNavigate();
 
-    // Función para navegar a la página de detalles del profesor
+    /**
+     * Maneja la navegación a la página de detalles del profesor
+     */
     const handleViewDetails = () => {
         navigate(`/admin/professors/${id}`);
     };
 
     return (
+        // Contenedor principal con efectos de hover
         <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="p-5">
+                {/* Sección de información principal */}
                 <div className="flex flex-col items-center pb-6">
-                    {/* Imagen del profesor */}
+                    {/* Imagen del profesor con fallback */}
                     <img 
                         className="w-24 h-24 mb-3 rounded-full shadow-lg border-2 border-teal-200" 
-                        src={image || "/api/placeholder/100/100"} // Imagen por defecto si no se proporciona
+                        src={image || "/api/placeholder/100/100"}
                         alt={`${name} profile`} 
                     />
-                    {/* Nombre del profesor */}
+                    
+                    {/* Información básica */}
                     <h5 className="mb-1 text-xl font-semibold text-gray-900">{name}</h5>
-                    {/* Departamento */}
                     <span className="text-sm text-gray-600 mb-2">{department}</span>
                     
-                    {/* Calificación con estrellas */}
+                    {/* Sistema de calificación con estrellas */}
                     <div className="flex items-center mb-3">
                         <div className="flex items-center mr-2">
                             {[...Array(5)].map((_, i) => (
@@ -59,15 +80,17 @@ const Card_Profesor_Admin = ({
                         <span className="text-sm font-bold">{rating}</span>
                     </div>
                     
-                    {/* Especialidades (limitadas a 2) */}
+                    {/* Sección de especialidades */}
                     <div className="mb-4 text-center">
                         <p className="text-xs text-gray-500 mb-1">Especialidades:</p>
                         <div className="flex flex-wrap justify-center gap-1">
+                            {/* Muestra las primeras 2 especialidades */}
                             {specialties && specialties.slice(0, 2).map((specialty, index) => (
                                 <span key={index} className="px-2 py-1 bg-teal-100 text-teal-800 text-xs rounded-full">
                                     {specialty}
                                 </span>
                             ))}
+                            {/* Indica si hay más especialidades */}
                             {specialties && specialties.length > 2 && (
                                 <span className="text-xs text-gray-500">+{specialties.length - 2} más</span>
                             )}
@@ -75,7 +98,7 @@ const Card_Profesor_Admin = ({
                     </div>
                 </div>
                 
-                {/* Botones de acción */}
+                {/* Botón de acción */}
                 <div className="flex justify-center">
                     <button 
                         onClick={handleViewDetails}
