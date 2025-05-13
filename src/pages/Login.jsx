@@ -41,17 +41,21 @@ const Login = () => {
         setError('');
 
         try {
-            // Intenta autenticar al usuario con las credenciales proporcionadas
-            await login(email, password);
+        // Pasar un objeto con email y password como espera AuthContext
+        const success = await login({ email, password });
+        if (success) {
             // Si la autenticación es exitosa, navega a la página principal
             navigate('/');
-        } catch (err) {
-            // Si hay un error, muestra el mensaje al usuario
+        } else {
             setError('Credenciales inválidas. Inténtalo de nuevo.');
-        } finally {
-            // Desactiva el estado de carga independientemente del resultado
-            setIsLoading(false);
         }
+    } catch (err) {
+        // Si hay un error, muestra el mensaje al usuario
+        setError('Credenciales inválidas. Inténtalo de nuevo.');
+    } finally {
+        // Desactiva el estado de carga independientemente del resultado
+        setIsLoading(false);
+    }
     };
 
     // ===== RENDERIZADO DEL COMPONENTE =====
