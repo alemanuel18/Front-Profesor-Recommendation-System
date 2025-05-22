@@ -1,39 +1,68 @@
 // @ Front-Profesor-Recommendation-System
 // @ File Name : Login.jsx
-// @ Date : 11/05/2025
-// @ Author : Alejandro Manuel Jerez Melgar 24678
+// @ Date : 21/05/2025
+// @ Author : Alejandro Jerez, Marcelo Detlefsen
 
 /**
  * Componente Login
  * 
  * Este archivo implementa la página de inicio de sesión del sistema.
- * Proporciona un formulario de autenticación con las siguientes características:
- * - Validación de correo electrónico y contraseña
- * - Manejo de estados de carga y errores
- * - Redirección tras inicio de sesión exitoso
- * - Interfaz responsiva con diseño split-screen
+ * Actualizado para conectarse con la API del backend y verificar el estado del sistema.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import apiService from '../services/apiService';
 import UVG from '../assets/uvg.png';
 
 const Login = () => {
     // ===== ESTADOS DEL COMPONENTE =====
-    // Estados para manejar el formulario y la interacción del usuario
-    const [email, setEmail] = useState(''); // Control del input de email
-    const [password, setPassword] = useState(''); // Control del input de contraseña
-    const [error, setError] = useState(''); // Manejo de mensajes de error
-    const [isLoading, setIsLoading] = useState(false); // Estado de carga durante la autenticación
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiStatus, setApiStatus] = useState({ healthy: false, checking: true });
 
     // ===== HOOKS Y CONTEXTO =====
-    const navigate = useNavigate(); // Hook para navegación programática
-    const { login } = useAuth(); // Hook personalizado para autenticación
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    // ===== EFECTOS =====
+    useEffect(() => {
+        checkApiHealth();
+    }, []);
+
+    // ===== FUNCIONES =====
+
+    /**
+     * Verifica el estado de salud de la API
+     */
+    const checkApiHealth = async () => {
+        try {
+            console.log('🔍 Verificando estado de la API...');
+            const response = await apiService.healthCheck();
+            
+            setApiStatus({
+                healthy: response && response.success,
+                checking: false,
+                message: response?.message || 'API disponible'
+            });
+            
+            console.log('✅ Estado de API verificado:', response);
+            
+        } catch (error) {
+            console.warn('⚠️ API no disponible:', error.message);
+            setApiStatus({
+                healthy: false,
+                checking: false,
+                message: 'Sistema funcionando en modo local'
+            });
+        }
+    };
 
     /**
      * Maneja el envío del formulario de inicio de sesión
-     * @param {Event} e - Evento del formulario
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,33 +70,83 @@ const Login = () => {
         setError('');
 
         try {
-        // Pasar un objeto con email y password como espera AuthContext
-        const success = await login({ email, password });
-        if (success) {
-            // Si la autenticación es exitosa, navega a la página principal
-            navigate('/');
-        } else {
-            setError('Credenciales inválidas. Inténtalo de nuevo.');
+            console.log('🔐 Intentando iniciar sesión...');
+            
+            // Validación básica
+            if (!email || !password) {
+                throw new Error('Por favor completa todos los campos');
+            }
+
+            // Validación de formato de email UVG
+            if (!email.includes('@uvg.edu.gt') && !email.includes('@admin.uvg')) {
+                throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
+            }
+
+            // Intentar autenticación
+            const success = await login({ email, password });
+            
+            if (success) {
+                console.log('✅ Inicio de sesión exitoso');
+                navigate('/');
+            } else {
+                throw new Error('Credenciales inválidas');
+            }
+            
+        } catch (err) {
+            console.error('❌ Error en inicio de sesión:', err);
+            setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
+        } finally {
+            setIsLoading(false);
         }
-    } catch (err) {
-        // Si hay un error, muestra el mensaje al usuario
-        setError('Credenciales inválidas. Inténtalo de nuevo.');
-    } finally {
-        // Desactiva el estado de carga independientemente del resultado
-        setIsLoading(false);
-    }
+    };
+
+    /**
+     * Maneja el inicio de sesión de demostración
+     */
+    const handleDemoLogin = async (userType) => {
+        setIsLoading(true);
+        setError('');
+
+        const demoCredentials = {
+            student: {
+                email: 'estudiante@uvg.edu.gt',
+                password: 'password123'
+            },
+            admin: {
+                email: 'admin@uvg.edu.gt',
+                password: 'admin123'
+            }
+        };
+
+        try {
+            const credentials = demoCredentials[userType];
+            const success = await login(credentials);
+            
+            if (success) {
+                navigate('/');
+            } else {
+                throw new Error('Error en credenciales de demostración');
+            }
+        } catch (err) {
+            setError('Error al acceder con credenciales de demostración');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // ===== RENDERIZADO DEL COMPONENTE =====
     return (
-        // Contenedor principal con diseño split-screen
         <div className="flex min-h-screen bg-gray-50">
             {/* Panel izquierdo - Formulario de inicio de sesión */}
             <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="w-full max-w-sm mx-auto lg:w-96">
                     {/* Logo de la UVG */}
                     <div className="flex justify-center mb-6">
-                        <img src={UVG} alt="UVG Logo" className="h-24 filter invert-0 brightness-0 sepia saturate-100 hue-rotate-[150deg] contrast-100" />
+                        <img 
+                            src={UVG} 
+                            alt="UVG Logo" 
+                            className="h-24 filter invert-0 brightness-0 sepia saturate-100 hue-rotate-[150deg] contrast-100" 
+                        />
                     </div>
 
                     {/* Encabezado y descripción */}
@@ -80,8 +159,37 @@ const Login = () => {
                         </p>
                     </div>
 
+                    {/* Estado de la API */}
+                    <div className="mt-6">
+                        {apiStatus.checking ? (
+                            <div className="flex items-center justify-center p-3 bg-gray-100 rounded-md">
+                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                <span className="text-sm text-gray-600">Verificando sistema...</span>
+                            </div>
+                        ) : (
+                            <div className={`p-3 rounded-md flex items-center ${
+                                apiStatus.healthy 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                                <div className="flex-shrink-0 mr-2">
+                                    {apiStatus.healthy ? (
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <span className="text-xs">{apiStatus.message}</span>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Formulario de inicio de sesión */}
-                    <div className="mt-10">
+                    <div className="mt-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Mostrar mensaje de error si existe */}
                             {error && (
@@ -134,22 +242,85 @@ const Login = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 transition-colors ${
+                                        isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                                    }`}
                                 >
                                     {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                                 </button>
                             </div>
                         </form>
+
+                        {/* Botones de demostración */}
+                        <div className="mt-6 space-y-3">
+                            <div className="text-center">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">
+                                    Cuentas de demostración
+                                </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoLogin('student')}
+                                    disabled={isLoading}
+                                    className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                >
+                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    Estudiante
+                                </button>
+                                
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoLogin('admin')}
+                                    disabled={isLoading}
+                                    className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                >
+                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Administrador
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Panel derecho - Banner decorativo */}
-            <div className="relative flex-1 hidden w-0 bg-teal-600 lg:block">
+            <div className="relative flex-1 hidden w-0 bg-gradient-to-br from-teal-600 to-teal-800 lg:block">
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
-                        <h1 className="text-4xl font-bold">Sistema de Asignación</h1>
-                        <p className="mt-4 text-xl">Universidad del Valle de Guatemala</p>
+                        <h1 className="text-4xl font-bold mb-4">Sistema de Asignación</h1>
+                        <p className="text-xl mb-8">Universidad del Valle de Guatemala</p>
+                        <div className="max-w-md mx-auto">
+                            <div className="bg-gradient-to-br bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+                                <h3 className="text-lg font-semibold mb-3">Características del Sistema</h3>
+                                <ul className="text-sm space-y-2 text-left">
+                                    <li className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Recomendaciones personalizadas
+                                    </li>
+                                    <li className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Análisis de compatibilidad
+                                    </li>
+                                    <li className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Gestión administrativa
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
