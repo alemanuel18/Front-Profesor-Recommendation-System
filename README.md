@@ -9,11 +9,21 @@ Es necesario de instalar node.js para poder ver/modificar/correr el proyecto.
 3. Instalar node.js siguiendo los pasos que indica.
 4. luego de la instalación verificar que esta se realizase de manera exitosa. Abriendo el CMD como administrador y correr el siguiente comando. 
 
-- node -v
+```bash
+node -v
+```
 
 ## Correr el proyecto
 
-- npm run dev
+1. Se instala npm para poder ejecutar el proyecto
+```bash
+npm install
+```
+
+2. Se ejecuta el programa
+```bash
+npm run dev
+```
 
 ## Iniciar Secion en Login (Estudiante)
 
