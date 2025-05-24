@@ -20,15 +20,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({Name}) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
 
     /**
      * Maneja la navegación al perfil del estudiante
+     * Navega a StudentDetails del estudiante logeado
      */
     const handleProfileClick = () => {
+        console.log('🔄 Navegando al perfil del estudiante:', user?.name || Name);
         navigate('/student-details');
     };
 
@@ -53,6 +57,9 @@ const Sidebar = ({Name}) => {
         return location.pathname === route;
     };
 
+    // Determinar el nombre a mostrar
+    const displayName = user?.nombreCompleto || user?.name || Name || 'Estudiante';
+
     return (
         // Contenedor principal de la barra lateral
         <aside className="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-50 dark:bg-gray-800" aria-label="Sidebar">
@@ -68,6 +75,7 @@ const Sidebar = ({Name}) => {
                                     ? 'bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-100'
                                     : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                             }`}
+                            title={`Ver perfil de ${displayName}`}
                         >
                             {/* Icono de usuario */}
                             <svg 
@@ -83,7 +91,9 @@ const Sidebar = ({Name}) => {
                             >
                                 <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
                             </svg>
-                            <span className="flex-1 ms-3 text-left">{Name}</span>
+                            <span className="flex-1 ms-3 text-left truncate" title={displayName}>
+                                {displayName}
+                            </span>
                             {/* Indicador de que es clickeable */}
                             <svg 
                                 className={`w-4 h-4 transition duration-75 ${
@@ -168,7 +178,7 @@ const Sidebar = ({Name}) => {
 
 // Validación de propiedades
 Sidebar.propTypes = {
-    Name: PropTypes.string.isRequired // El nombre es requerido
+    Name: PropTypes.string // El nombre es opcional ya que se puede obtener del contexto
 };
 
 export default Sidebar;
