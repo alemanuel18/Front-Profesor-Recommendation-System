@@ -133,8 +133,8 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             errors.cursosZonaMinima = 'Este campo es requerido';
         } else {
             const cursos = parseInt(formData.cursosZonaMinima);
-            if (isNaN(cursos) || cursos < 0) {
-                errors.cursosZonaMinima = 'Debe ser un número mayor o igual a 0';
+            if (isNaN(cursos) || cursos < 0 || cursos >6) {
+                errors.cursosZonaMinima = 'Debe ser un número entre 1 y 6';
             }
         }
 
