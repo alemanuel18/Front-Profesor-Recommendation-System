@@ -20,7 +20,7 @@ import apiService from '../services/apiService';
 
 const StudentDetails = () => {
     // ===== HOOKS Y ESTADOS =====
-    const { user, isAuthenticated } = useAuth();
+    const { currentUser } = useAuth(); // Corregido: usar currentUser en lugar de user
     const navigate = useNavigate();
     
     // Estados locales
@@ -34,14 +34,16 @@ const StudentDetails = () => {
     // ===== EFECTOS =====
     useEffect(() => {
         // Verificar que el usuario esté autenticado
-        if (!isAuthenticated()) {
+        if (!currentUser) {
+            console.log('❌ Usuario no autenticado, redirigiendo a login...');
             navigate('/login');
             return;
         }
         
+        console.log('✅ Usuario autenticado:', currentUser);
         fetchStudentData();
         fetchCursosAsignados();
-    }, [isAuthenticated, navigate]);
+    }, [currentUser, navigate]);
 
     // ===== FUNCIONES =====
 
@@ -54,10 +56,11 @@ const StudentDetails = () => {
 
         try {
             console.log('🔍 Obteniendo datos del estudiante...');
+            console.log('👤 Usuario actual:', currentUser);
             
             // Intentar obtener datos desde la API
-            if (user?.carnet) {
-                const response = await apiService.getEstudiante(user.carnet);
+            if (currentUser?.carnet) {
+                const response = await apiService.getEstudiante(currentUser.carnet);
                 
                 if (response && response.success && response.data) {
                     setStudent(response.data);
@@ -67,20 +70,20 @@ const StudentDetails = () => {
             }
             
             // Fallback: usar datos del usuario actual
-            if (user) {
+            if (currentUser) {
                 setStudent({
-                    nombreCompleto: user.nombreCompleto || user.name || '',
-                    carnet: user.carnet || '',
-                    carrera: user.carrera || '',
-                    pensum: user.pensum || '',
-                    promedioAnterior: user.promedioAnterior || 0,
-                    grado: user.grado || '',
-                    cargaMaxima: user.cargaMaxima || 0,
-                    estiloAprendizaje: user.estiloAprendizaje || '',
-                    estiloClase: user.estiloClase || '',
-                    cursosZonaMinima: user.cursosZonaMinima || 0,
-                    fechaRegistro: user.fechaRegistro || new Date().toISOString(),
-                    email: user.email || `${user.carnet}@uvg.edu.gt`
+                    nombreCompleto: currentUser.nombreCompleto || currentUser.name || '',
+                    carnet: currentUser.carnet || currentUser.id || '',
+                    carrera: currentUser.carrera || 'Ingeniería en Ciencias de la Computación',
+                    pensum: currentUser.pensum || '2024',
+                    promedioAnterior: currentUser.promedioAnterior || 85.5,
+                    grado: currentUser.grado || 'Tercer año',
+                    cargaMaxima: currentUser.cargaMaxima || 5,
+                    estiloAprendizaje: currentUser.estiloAprendizaje || 'mixto',
+                    estiloClase: currentUser.estiloClase || 'con_tecnologia',
+                    cursosZonaMinima: currentUser.cursosZonaMinima || 1,
+                    fechaRegistro: currentUser.fechaRegistro || new Date().toISOString(),
+                    email: currentUser.email || `${currentUser.carnet || currentUser.id}@uvg.edu.gt`
                 });
                 console.log('✅ Datos del estudiante obtenidos desde contexto');
             } else {
@@ -91,7 +94,7 @@ const StudentDetails = () => {
             console.error('❌ Error obteniendo datos del estudiante:', err);
             setError(err.message);
             
-            // Datos mock como último recurso
+            // Datos mock como último recurso basados en el usuario actual
             setStudent(getMockStudentData());
         } finally {
             setLoading(false);
@@ -106,8 +109,8 @@ const StudentDetails = () => {
             console.log('📚 Obteniendo cursos asignados...');
             
             // Intentar obtener desde la API
-            if (user?.carnet) {
-                const response = await apiService.getCursosEstudiante(user.carnet);
+            if (currentUser?.carnet) {
+                const response = await apiService.getCursosEstudiante(currentUser.carnet);
                 
                 if (response && response.success && response.data) {
                     setCursosAsignados(response.data);
@@ -129,8 +132,8 @@ const StudentDetails = () => {
      */
     const getMockStudentData = () => {
         return {
-            nombreCompleto: 'Juan Pérez García',
-            carnet: '12345',
+            nombreCompleto: currentUser?.name || currentUser?.nombreCompleto || 'JEREZ MELGAR, ALEJANDRO MANUEL',
+            carnet: currentUser?.id || '24678',
             carrera: 'Ingeniería en Ciencias de la Computación',
             pensum: '2024',
             promedioAnterior: 85.5,
@@ -140,7 +143,7 @@ const StudentDetails = () => {
             estiloClase: 'con_tecnologia',
             cursosZonaMinima: 1,
             fechaRegistro: new Date().toISOString(),
-            email: '12345@uvg.edu.gt'
+            email: `${currentUser?.id || '24678'}@uvg.edu.gt`
         };
     };
 
@@ -252,7 +255,7 @@ const StudentDetails = () => {
     if (loading) {
         return (
             <div className="flex">
-                <Sidebar Name={user?.name || user?.nombreCompleto || 'Estudiante'} />
+                <Sidebar Name={currentUser?.name || currentUser?.nombreCompleto || 'Estudiante'} />
                 <div className="ml-64 flex-1 w-full">
                     <Header />
                     <div className="flex items-center justify-center h-64">
@@ -271,7 +274,7 @@ const StudentDetails = () => {
     // ===== RENDERIZADO DEL COMPONENTE =====
     return (
         <div className="flex">
-            <Sidebar Name={student?.nombreCompleto || 'Estudiante'} />
+            <Sidebar Name={student?.nombreCompleto || currentUser?.name || currentUser?.nombreCompleto || 'Estudiante'} />
             <div className="ml-64 flex-1 w-full">
                 <Header />
                 <div className="p-8">
