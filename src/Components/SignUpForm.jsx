@@ -379,10 +379,17 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     label="Carga Máxima (cursos)"
                     name="cargaMaxima"
                     type="number"
-                    placeholder="5"
+                    min="1"
+                    max="7"
+                    placeholder="6"
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
+                    value={formData.cargaMaxima}
+                    onChange={(e) => {
+                        const value = Math.min(7, Math.max(1, e.target.value)); // Fuerza entre 1-7
+                        handleInputChange({target: {name: 'cargaMaxima', value}});
+                    }}
                 />
 
                 <FormField

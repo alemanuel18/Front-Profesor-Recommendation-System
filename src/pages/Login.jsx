@@ -130,34 +130,35 @@ const Login = () => {
 
             // Preparar datos para el registro
             const registrationData = {
-                nombre: formData.nombre,
-                apellido: formData.apellido,
+                nombre: `${formData.nombres} ${formData.apellidos}`,
                 carnet: formData.carnet,
-                email: formData.email,
-                password: formData.password,
-                facultad: formData.facultad,
-                carrera: formData.carrera
+                carrera: formData.carrera,
+                pensum: formData.pensum,
+                promedio: parseFloat(formData.promedioAnterior),
+                grado: formData.grado,
+                carga_maxima: parseInt(formData.cargaMaxima),
+                estilo_aprendizaje: formData.estiloAprendizaje,
+                estilo_clase: formData.estiloClase,
+                cursos_zona_minima: parseInt(formData.cursosZonaMinima),
+                email: `${formData.carnet}@uvg.edu.gt`,
+                password: formData.password
             };
 
-            console.log('Datos de registro:', registrationData);
+            console.log('Enviando datos:', registrationData); 
             
-            // Aquí deberías hacer la llamada a tu API para registrar el usuario
-            // Ejemplo de implementación:
-            // const response = await apiService.registerUser(registrationData);
+             // Llamar a la API para registrar
+            const response = await apiService.createEstudiante(registrationData);
             
-            // Simulación de registro (reemplazar con llamada real a la API)
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Mostrar mensaje de éxito
-            alert(`¡Registro exitoso! Tu cuenta ha sido creada con el email: ${formData.email}`);
-            
-            // Cambiar de vuelta al modo login y pre-llenar el email
-            setIsSignUpMode(false);
-            setEmail(formData.email);
-            
-        } catch (err) {
-            console.error('❌ Error en registro:', err);
-            setError(err.message || 'Error al registrar usuario. Inténtalo de nuevo.');
+            if (response && response.success) {
+                alert('✅ Registro exitoso! Ahora puedes iniciar sesión');
+                setIsSignUpMode(false);
+                setEmail(`${formData.carnet}@uvg.edu.gt`);
+            } else {
+                throw new Error(response?.message || '❌ Error en el registro');
+            }
+        } catch (error) {
+            console.error('Error completo:', error); // Muestra el error completo
+            setError(error.message || 'Error al registrar. Inténtalo de nuevo.');
         } finally {
             setIsLoading(false);
         }

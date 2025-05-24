@@ -3,57 +3,42 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 class ApiService {
   // Método genérico para hacer peticiones HTTP
   async makeRequest(endpoint, options = {}) {
-    try {
-      const url = `${API_BASE_URL}${endpoint}`;
-      console.log(`🔗 API Request: ${options.method || 'GET'} ${url}`);
-      
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
-      };
-
-      const response = await fetch(url, config);
-      console.log(`📡 API Response Status: ${response.status} ${response.statusText}`);
-      
-      // Obtener el texto de la respuesta primero
-      const responseText = await response.text();
-      console.log(`📝 Raw Response:`, responseText);
-      
-      if (!response.ok) {
-        let errorMessage = `Error HTTP: ${response.status} ${response.statusText}`;
-        
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-        } catch (parseError) {
-          console.warn('No se pudo parsear error como JSON:', parseError);
-          errorMessage = responseText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
-      // Intentar parsear como JSON
       try {
-        return JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        console.error('Response text:', responseText);
-        throw new Error(`Respuesta inválida del servidor: ${responseText.substring(0, 100)}...`);
+          const url = `${API_BASE_URL}${endpoint}`;
+          const config = {
+              headers: {
+                  'Content-Type': 'application/json',
+                  ...options.headers,
+              },
+              ...options,
+          };
+
+          const response = await fetch(url, config);
+          
+          if (!response.ok) {
+              let errorData;
+              try {
+                  errorData = await response.json();
+              } catch (e) {
+                  errorData = await response.text();
+              }
+              
+              const errorMessage = errorData?.message || 
+                                errorData?.detail || 
+                                `Error HTTP: ${response.status}`;
+              throw new Error(errorMessage);
+          }
+
+          return await response.json();
+      } catch (error) {
+          console.error('❌ Error en petición API:', {
+              endpoint,
+              url: `${API_BASE_URL}${endpoint}`,
+              error: error.toString(),  // Mostrar solo el mensaje
+              stack: error.stack
+          });
+          throw error;
       }
-      
-    } catch (error) {
-      console.error('❌ Error en petición API:', {
-        endpoint,
-        url: `${API_BASE_URL}${endpoint}`,
-        error: error.message,
-        stack: error.stack
-      });
-      throw error;
-    }
   }
 
   // ===== ESTUDIANTES =====
