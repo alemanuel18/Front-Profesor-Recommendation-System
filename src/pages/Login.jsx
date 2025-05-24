@@ -113,30 +113,47 @@ const Login = () => {
         try {
             console.log('📝 Intentando registrar usuario...');
             
-            // Construir email basado en carnet
-            const emailFromCarnet = `${formData.carnet}@uvg.edu.gt`;
-            
-            // Aquí deberías hacer la llamada a tu API para registrar el usuario
-            // Por ahora simularemos el proceso
-            
-            // Simulación de registro (reemplazar con llamada real a la API)
+            // Validación básica
+            if (!formData.email || !formData.password) {
+                throw new Error('Por favor completa todos los campos requeridos');
+            }
+
+            // Validación de formato de email UVG
+            if (!formData.email.includes('@uvg.edu.gt')) {
+                throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
+            }
+
+            // Validación de confirmación de contraseña
+            if (formData.password !== formData.confirmPassword) {
+                throw new Error('Las contraseñas no coinciden');
+            }
+
+            // Preparar datos para el registro
             const registrationData = {
-                ...formData,
-                email: emailFromCarnet,
-                password: 'password123' // En un sistema real, esto debería ser generado de forma segura
+                nombre: formData.nombre,
+                apellido: formData.apellido,
+                carnet: formData.carnet,
+                email: formData.email,
+                password: formData.password,
+                facultad: formData.facultad,
+                carrera: formData.carrera
             };
 
             console.log('Datos de registro:', registrationData);
             
-            // Simular delay de API
+            // Aquí deberías hacer la llamada a tu API para registrar el usuario
+            // Ejemplo de implementación:
+            // const response = await apiService.registerUser(registrationData);
+            
+            // Simulación de registro (reemplazar con llamada real a la API)
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // Por ahora mostraremos un mensaje de éxito
-            alert(`Registro exitoso! Tu cuenta ha sido creada con el email: ${emailFromCarnet}\nContraseña temporal: password123`);
+            // Mostrar mensaje de éxito
+            alert(`¡Registro exitoso! Tu cuenta ha sido creada con el email: ${formData.email}`);
             
-            // Cambiar de vuelta al modo login
+            // Cambiar de vuelta al modo login y pre-llenar el email
             setIsSignUpMode(false);
-            setEmail(emailFromCarnet);
+            setEmail(formData.email);
             
         } catch (err) {
             console.error('❌ Error en registro:', err);
@@ -249,7 +266,7 @@ const Login = () => {
                         {isSignUpMode ? (
                             // Formulario de registro
                             <SignUpForm
-                                onSubmit={handleSignUpSubmit} //El sistema está listo para integrarse con tu API backend. Solo necesitas reemplazar la simulación en handleSignUpSubmit con la llamada real a tu endpoint de registro.
+                                onSubmit={handleSignUpSubmit}
                                 isLoading={isLoading}
                                 error={error}
                             />
