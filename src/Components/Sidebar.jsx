@@ -25,14 +25,16 @@ import { useAuth } from '../context/AuthContext';
 const Sidebar = ({Name}) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    const { currentUser } = useAuth(); // Cambiado de 'user' a 'currentUser' para consistencia
 
     /**
      * Maneja la navegación al perfil del estudiante
      * Navega a StudentDetails del estudiante logeado
      */
     const handleProfileClick = () => {
-        console.log('🔄 Navegando al perfil del estudiante:', user?.name || Name);
+        const studentName = currentUser?.name || currentUser?.nombreCompleto || Name;
+        console.log('🔄 Navegando al perfil del estudiante:', studentName);
+        console.log('👤 Usuario actual:', currentUser);
         navigate('/student-details');
     };
 
@@ -40,6 +42,7 @@ const Sidebar = ({Name}) => {
      * Maneja la navegación al dashboard
      */
     const handleDashboardClick = () => {
+        console.log('🏠 Navegando al dashboard');
         navigate('/dashboard');
     };
 
@@ -47,6 +50,7 @@ const Sidebar = ({Name}) => {
      * Maneja la navegación a cursos
      */
     const handleCursosClick = () => {
+        console.log('📚 Navegando a cursos');
         navigate('/cursos');
     };
 
@@ -57,8 +61,14 @@ const Sidebar = ({Name}) => {
         return location.pathname === route;
     };
 
-    // Determinar el nombre a mostrar
-    const displayName = user?.nombreCompleto || user?.name || Name || 'Estudiante';
+    // Determinar el nombre a mostrar con prioridad al usuario logueado
+    const displayName = currentUser?.nombreCompleto || 
+                       currentUser?.name || 
+                       Name || 
+                       'Estudiante';
+
+    console.log('📋 Sidebar - displayName:', displayName);
+    console.log('📋 Sidebar - currentUser:', currentUser);
 
     return (
         // Contenedor principal de la barra lateral
@@ -70,7 +80,7 @@ const Sidebar = ({Name}) => {
                         {/* Perfil del estudiante - Clickeable */}
                         <button
                             onClick={handleProfileClick}
-                            className={`w-full flex items-center p-2 text-left rounded-lg transition-colors duration-200 group ${
+                            className={`w-full flex items-center p-2 text-left rounded-lg transition-colors duration-200 group hover:bg-teal-50 dark:hover:bg-teal-900/20 ${
                                 isActiveRoute('/student-details')
                                     ? 'bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-100'
                                     : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -82,7 +92,7 @@ const Sidebar = ({Name}) => {
                                 className={`w-5 h-5 transition duration-75 ${
                                     isActiveRoute('/student-details')
                                         ? 'text-teal-600 dark:text-teal-300'
-                                        : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white'
+                                        : 'text-gray-500 group-hover:text-teal-600 dark:text-gray-400 dark:group-hover:text-teal-400'
                                 }`} 
                                 aria-hidden="true" 
                                 xmlns="http://www.w3.org/2000/svg" 
@@ -91,7 +101,7 @@ const Sidebar = ({Name}) => {
                             >
                                 <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
                             </svg>
-                            <span className="flex-1 ms-3 text-left truncate" title={displayName}>
+                            <span className="flex-1 ms-3 text-left truncate font-medium" title={displayName}>
                                 {displayName}
                             </span>
                             {/* Indicador de que es clickeable */}
@@ -99,7 +109,7 @@ const Sidebar = ({Name}) => {
                                 className={`w-4 h-4 transition duration-75 ${
                                     isActiveRoute('/student-details')
                                         ? 'text-teal-600 dark:text-teal-300'
-                                        : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                                        : 'text-gray-400 group-hover:text-teal-500 dark:group-hover:text-teal-400'
                                 }`}
                                 fill="none" 
                                 stroke="currentColor" 
