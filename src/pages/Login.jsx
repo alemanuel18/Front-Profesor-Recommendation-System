@@ -1,6 +1,6 @@
 // @ Front-Profesor-Recommendation-System
 // @ File Name : Login.jsx
-// @ Date : 21/05/2025
+// @ Date : 24/05/2025
 // @ Author : Alejandro Jerez, Marcelo Detlefsen
 
 /**
@@ -8,12 +8,14 @@
  * 
  * Este archivo implementa la página de inicio de sesión del sistema.
  * Actualizado para conectarse con la API del backend y verificar el estado del sistema.
+ * Incluye funcionalidad de registro de usuarios.
  */
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiService from '../services/apiService';
+import SignUpForm from '../Components/SignUpForm';
 import UVG from '../assets/uvg.png';
 
 const Login = () => {
@@ -23,6 +25,7 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [apiStatus, setApiStatus] = useState({ healthy: false, checking: true });
+    const [isSignUpMode, setIsSignUpMode] = useState(false); // Nuevo estado para alternar entre login y signup
 
     // ===== HOOKS Y CONTEXTO =====
     const navigate = useNavigate();
@@ -64,7 +67,7 @@ const Login = () => {
     /**
      * Maneja el envío del formulario de inicio de sesión
      */
-    const handleSubmit = async (e) => {
+    const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
@@ -95,6 +98,49 @@ const Login = () => {
         } catch (err) {
             console.error('❌ Error en inicio de sesión:', err);
             setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Maneja el envío del formulario de registro
+     */
+    const handleSignUpSubmit = async (formData) => {
+        setIsLoading(true);
+        setError('');
+
+        try {
+            console.log('📝 Intentando registrar usuario...');
+            
+            // Construir email basado en carnet
+            const emailFromCarnet = `${formData.carnet}@uvg.edu.gt`;
+            
+            // Aquí deberías hacer la llamada a tu API para registrar el usuario
+            // Por ahora simularemos el proceso
+            
+            // Simulación de registro (reemplazar con llamada real a la API)
+            const registrationData = {
+                ...formData,
+                email: emailFromCarnet,
+                password: 'password123' // En un sistema real, esto debería ser generado de forma segura
+            };
+
+            console.log('Datos de registro:', registrationData);
+            
+            // Simular delay de API
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Por ahora mostraremos un mensaje de éxito
+            alert(`Registro exitoso! Tu cuenta ha sido creada con el email: ${emailFromCarnet}\nContraseña temporal: password123`);
+            
+            // Cambiar de vuelta al modo login
+            setIsSignUpMode(false);
+            setEmail(emailFromCarnet);
+            
+        } catch (err) {
+            console.error('❌ Error en registro:', err);
+            setError(err.message || 'Error al registrar usuario. Inténtalo de nuevo.');
         } finally {
             setIsLoading(false);
         }
@@ -134,12 +180,22 @@ const Login = () => {
         }
     };
 
+    /**
+     * Alterna entre modo login y signup
+     */
+    const toggleMode = () => {
+        setIsSignUpMode(!isSignUpMode);
+        setError('');
+        setEmail('');
+        setPassword('');
+    };
+
     // ===== RENDERIZADO DEL COMPONENTE =====
     return (
         <div className="flex min-h-screen bg-gray-50">
-            {/* Panel izquierdo - Formulario de inicio de sesión */}
+            {/* Panel izquierdo - Formulario de inicio de sesión/registro */}
             <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-                <div className="w-full max-w-sm mx-auto lg:w-96">
+                <div className={`w-full mx-auto ${isSignUpMode ? 'max-w-2xl' : 'max-w-sm lg:w-96'}`}>
                     {/* Logo de la UVG */}
                     <div className="flex justify-center mb-6">
                         <img 
@@ -155,7 +211,7 @@ const Login = () => {
                             Sistema de Recomendación de Profesores
                         </h2>
                         <p className="mt-2 text-sm text-center text-gray-600">
-                            Inicia sesión para acceder al sistema
+                            {isSignUpMode ? 'Crea tu cuenta para acceder al sistema' : 'Inicia sesión para acceder al sistema'}
                         </p>
                     </div>
 
@@ -188,104 +244,130 @@ const Login = () => {
                         )}
                     </div>
 
-                    {/* Formulario de inicio de sesión */}
+                    {/* Contenedor principal del formulario */}
                     <div className="mt-8">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Mostrar mensaje de error si existe */}
-                            {error && (
-                                <div className="p-3 text-sm text-red-600 bg-red-100 border border-red-200 rounded-md">
-                                    {error}
+                        {isSignUpMode ? (
+                            // Formulario de registro
+                            <SignUpForm
+                                onSubmit={handleSignUpSubmit} //El sistema está listo para integrarse con tu API backend. Solo necesitas reemplazar la simulación en handleSignUpSubmit con la llamada real a tu endpoint de registro.
+                                isLoading={isLoading}
+                                error={error}
+                            />
+                        ) : (
+                            // Formulario de inicio de sesión
+                            <form onSubmit={handleLoginSubmit} className="space-y-6">
+                                {/* Mostrar mensaje de error si existe */}
+                                {error && (
+                                    <div className="p-3 text-sm text-red-600 bg-red-100 border border-red-200 rounded-md">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* Campo de correo electrónico */}
+                                <div>
+                                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+                                        Correo Electrónico
+                                    </label>
+                                    <div className="mt-2">
+                                        <input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            autoComplete="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
+                                            placeholder="estudiante@uvg.edu.gt"
+                                        />
+                                    </div>
                                 </div>
-                            )}
 
-                            {/* Campo de correo electrónico */}
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Correo Electrónico
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
-                                        placeholder="estudiante@uvg.edu.gt"
-                                    />
+                                {/* Campo de contraseña */}
+                                <div>
+                                    <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+                                        Contraseña
+                                    </label>
+                                    <div className="mt-2">
+                                        <input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            autoComplete="current-password"
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Campo de contraseña */}
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Contraseña
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
-                                    />
+                                {/* Botón de envío */}
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 transition-colors ${
+                                            isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                                        }`}
+                                    >
+                                        {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                                    </button>
                                 </div>
-                            </div>
+                            </form>
+                        )}
 
-                            {/* Botón de envío */}
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 transition-colors ${
-                                        isLoading ? 'opacity-70 cursor-not-allowed' : ''
-                                    }`}
-                                >
-                                    {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-                                </button>
-                            </div>
-                        </form>
-
-                        {/* Botones de demostración */}
-                        <div className="mt-6 space-y-3">
-                            <div className="text-center">
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">
-                                    Cuentas de demostración
-                                </span>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => handleDemoLogin('student')}
-                                    disabled={isLoading}
-                                    className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
-                                >
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    Estudiante
-                                </button>
-                                
-                                <button
-                                    type="button"
-                                    onClick={() => handleDemoLogin('admin')}
-                                    disabled={isLoading}
-                                    className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
-                                >
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    Administrador
-                                </button>
-                            </div>
+                        {/* Botón para alternar entre login y signup */}
+                        <div className="mt-6 text-center">
+                            <button
+                                type="button"
+                                onClick={toggleMode}
+                                className="text-sm text-teal-600 hover:text-teal-500 font-medium transition-colors"
+                            >
+                                {isSignUpMode 
+                                    ? '¿Ya tienes cuenta? Inicia sesión' 
+                                    : '¿No tienes cuenta? Regístrate aquí'
+                                }
+                            </button>
                         </div>
+
+                        {/* Botones de demostración - Solo en modo login */}
+                        {!isSignUpMode && (
+                            <div className="mt-6 space-y-3">
+                                <div className="text-center">
+                                    <span className="text-xs text-gray-500 uppercase tracking-wide">
+                                        Cuentas de demostración
+                                    </span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDemoLogin('student')}
+                                        disabled={isLoading}
+                                        className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Estudiante
+                                    </button>
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDemoLogin('admin')}
+                                        disabled={isLoading}
+                                        className="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Administrador
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -294,30 +376,59 @@ const Login = () => {
             <div className="relative flex-1 hidden w-0 bg-gradient-to-br from-teal-600 to-teal-800 lg:block">
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
-                        <h1 className="text-4xl font-bold mb-4">Sistema de Asignación</h1>
+                        <h1 className="text-4xl font-bold mb-4">
+                            {isSignUpMode ? 'Únete al Sistema' : 'Sistema de Asignación'}
+                        </h1>
                         <p className="text-xl mb-8">Universidad del Valle de Guatemala</p>
                         <div className="max-w-md mx-auto">
                             <div className="bg-gradient-to-br bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
-                                <h3 className="text-lg font-semibold mb-3">Características del Sistema</h3>
+                                <h3 className="text-lg font-semibold mb-3">
+                                    {isSignUpMode ? 'Beneficios del Sistema' : 'Características del Sistema'}
+                                </h3>
                                 <ul className="text-sm space-y-2 text-left">
-                                    <li className="flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                        Recomendaciones personalizadas
-                                    </li>
-                                    <li className="flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                        Análisis de compatibilidad
-                                    </li>
-                                    <li className="flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                        Gestión administrativa
-                                    </li>
+                                    {isSignUpMode ? (
+                                        <>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Profesores adaptados a tu estilo
+                                            </li>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Optimización de tu carga académica
+                                            </li>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Mejores resultados académicos
+                                            </li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Recomendaciones personalizadas
+                                            </li>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Análisis de compatibilidad
+                                            </li>
+                                            <li className="flex items-center">
+                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                Gestión administrativa
+                                            </li>
+                                        </>
+                                    )}
                                 </ul>
                             </div>
                         </div>
