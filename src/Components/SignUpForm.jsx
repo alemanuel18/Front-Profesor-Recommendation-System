@@ -8,6 +8,7 @@
  * 
  * Formulario reutilizable para el registro de nuevos usuarios del sistema.
  * Incluye validaciones y manejo de estados para todos los campos requeridos.
+ * Actualizado para incluir campos de correo y contraseña.
  */
 
 import React, { useState } from 'react';
@@ -54,6 +55,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
     const [formData, setFormData] = useState({
         nombreCompleto: '',
         carnet: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
         carrera: '',
         pensum: '',
         promedioAnterior: '',
@@ -117,6 +121,31 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             errors.carnet = 'El carnet es requerido';
         } else if (!/^\d{5,7}$/.test(formData.carnet)) {
             errors.carnet = 'El carnet debe tener entre 5 y 7 dígitos';
+        }
+
+        // Validar email
+        if (!formData.email) {
+            errors.email = 'El correo electrónico es requerido';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            errors.email = 'Por favor ingresa un correo electrónico válido';
+        } else if (!formData.email.includes('@uvg.edu.gt')) {
+            errors.email = 'Debe usar un correo institucional (@uvg.edu.gt)';
+        }
+
+        // Validar contraseña
+        if (!formData.password) {
+            errors.password = 'La contraseña es requerida';
+        } else if (formData.password.length < 6) {
+            errors.password = 'La contraseña debe tener al menos 6 caracteres';
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+            errors.password = 'La contraseña debe contener al menos una mayúscula, una minúscula y un número';
+        }
+
+        // Validar confirmación de contraseña
+        if (!formData.confirmPassword) {
+            errors.confirmPassword = 'Confirma tu contraseña';
+        } else if (formData.password !== formData.confirmPassword) {
+            errors.confirmPassword = 'Las contraseñas no coinciden';
         }
 
         // Validar carrera
@@ -248,6 +277,41 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
                 />
+            </div>
+
+            {/* Información de Acceso */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-1">
+                <FormField
+                    label="Correo Electrónico"
+                    name="email"
+                    type="email"
+                    placeholder="12345@uvg.edu.gt"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
+                />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FormField
+                        label="Contraseña"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        formData={formData}
+                        validationErrors={validationErrors}
+                        handleInputChange={handleInputChange}
+                    />
+
+                    <FormField
+                        label="Confirmar Contraseña"
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        formData={formData}
+                        validationErrors={validationErrors}
+                        handleInputChange={handleInputChange}
+                    />
+                </div>
             </div>
 
             {/* Información Académica */}
