@@ -5,6 +5,7 @@ import Materias from './pages/Materias';
 import Seleccion_Profesores from './pages/Seleccion_Profesores';
 import Login from './pages/Login';
 import ProfessorDetails from './pages/ProfessorDetails';
+import StudentDetails from './pages/StudentDetails'; // Agregar import
 import AdminProfessors from './pages/Admin/AdminProfessors';
 import { StudentProvider } from './context/StudentContext';
 import { AuthProvider } from './context/AuthContext';
@@ -26,6 +27,16 @@ function App() {
               <Route path="/" element={
                 <ProtectedRoute>
                   <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/student-details" element={
+                <ProtectedRoute>
+                  <StudentDetails />
                 </ProtectedRoute>
               } />
               <Route path="/cursos" element={
