@@ -12,6 +12,43 @@
 
 import React, { useState } from 'react';
 
+// ===== COMPONENTE DE CAMPO CON ERROR (MOVIDO FUERA DEL RENDER) =====
+const FormField = ({ 
+    label, 
+    name, 
+    type = 'text', 
+    required = true, 
+    children, 
+    placeholder = '',
+    formData,
+    validationErrors,
+    handleInputChange
+}) => (
+    <div>
+        <label htmlFor={name} className="block text-sm font-medium leading-6 text-gray-900">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="mt-2">
+            {children || (
+                <input
+                    id={name}
+                    name={name}
+                    type={type}
+                    value={formData[name]}
+                    onChange={handleInputChange}
+                    placeholder={placeholder}
+                    className={`block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ${
+                        validationErrors[name] ? 'ring-red-300' : 'ring-gray-300'
+                    } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6`}
+                />
+            )}
+        </div>
+        {validationErrors[name] && (
+            <p className="mt-1 text-sm text-red-600">{validationErrors[name]}</p>
+        )}
+    </div>
+);
+
 const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
     // ===== ESTADOS DEL FORMULARIO =====
     const [formData, setFormData] = useState({
@@ -133,8 +170,8 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             errors.cursosZonaMinima = 'Este campo es requerido';
         } else {
             const cursos = parseInt(formData.cursosZonaMinima);
-            if (isNaN(cursos) || cursos < 0 || cursos >6) {
-                errors.cursosZonaMinima = 'Debe ser un número entre 1 y 6';
+            if (isNaN(cursos) || cursos < 0 || cursos > 6) {
+                errors.cursosZonaMinima = 'Debe ser un número entre 0 y 6';
             }
         }
 
@@ -171,40 +208,6 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
         onSubmit(formData);
     };
 
-    // ===== COMPONENTE DE CAMPO CON ERROR =====
-    const FormField = ({ 
-        label, 
-        name, 
-        type = 'text', 
-        required = true, 
-        children, 
-        placeholder = '' 
-    }) => (
-        <div>
-            <label htmlFor={name} className="block text-sm font-medium leading-6 text-gray-900">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <div className="mt-2">
-                {children || (
-                    <input
-                        id={name}
-                        name={name}
-                        type={type}
-                        value={formData[name]}
-                        onChange={handleInputChange}
-                        placeholder={placeholder}
-                        className={`block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ${
-                            validationErrors[name] ? 'ring-red-300' : 'ring-gray-300'
-                        } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6`}
-                    />
-                )}
-            </div>
-            {validationErrors[name] && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors[name]}</p>
-            )}
-        </div>
-    );
-
     // ===== RENDERIZADO DEL COMPONENTE =====
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -222,6 +225,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                         label="Nombre Completo"
                         name="nombreCompleto"
                         placeholder="Juan Pérez García"
+                        formData={formData}
+                        validationErrors={validationErrors}
+                        handleInputChange={handleInputChange}
                     />
                 </div>
 
@@ -229,12 +235,18 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     label="Carnet"
                     name="carnet"
                     placeholder="12345"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 />
 
                 <FormField
                     label="Pensum"
                     name="pensum"
                     placeholder="2024"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 />
             </div>
 
@@ -243,6 +255,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                 <FormField
                     label="Carrera"
                     name="carrera"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 >
                     <select
                         id="carrera"
@@ -263,6 +278,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                 <FormField
                     label="Grado"
                     name="grado"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 >
                     <select
                         id="grado"
@@ -288,6 +306,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     name="promedioAnterior"
                     type="number"
                     placeholder="85.5"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 />
 
                 <FormField
@@ -295,6 +316,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     name="cargaMaxima"
                     type="number"
                     placeholder="5"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 />
 
                 <FormField
@@ -302,6 +326,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     name="cursosZonaMinima"
                     type="number"
                     placeholder="0"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 />
             </div>
 
@@ -310,6 +337,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                 <FormField
                     label="Estilo de Aprendizaje"
                     name="estiloAprendizaje"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 >
                     <select
                         id="estiloAprendizaje"
@@ -330,6 +360,9 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                 <FormField
                     label="Estilo de Clase Preferido"
                     name="estiloClase"
+                    formData={formData}
+                    validationErrors={validationErrors}
+                    handleInputChange={handleInputChange}
                 >
                     <select
                         id="estiloClase"
