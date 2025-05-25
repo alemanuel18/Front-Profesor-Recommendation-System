@@ -17,44 +17,33 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useStudent } from '../../context/StudentContext';
 
-/**
- * Renderiza una tarjeta con información detallada del estudiante
- * @param {Object} props - Propiedades del componente
- * @param {string|number} props.id - ID único del estudiante
- * @param {string} props.Carne - Número de carnet del estudiante
- * @param {string} props.Name - Nombre completo del estudiante
- * @param {string} props.Carrera - Carrera que estudia
- * @param {string} props.Pensum - Plan de estudios actual
- * @param {string|number} props.Promedio_Ciclo_Anterior - Promedio del último ciclo
- * @param {string|number} props.Grado - Grado actual
- * @param {string} props.Carga_MAX - Límite de carga académica
- */
-const Card_Estudiante = ({ 
-    id,
-    Carne,
-    Name,
-    Carrera,
-    Pensum,
-    Promedio_Ciclo_Anterior,
-    Grado,
-    Carga_MAX
-}) => (
-    // Contenedor principal con estilo de tarjeta
-    <div className="w-full max-w-4xl p-8 bg-gray-100 border border-gray-200 rounded-lg mb-6">
-        {/* Lista de información del estudiante */}
-        <div className="space-y-3">
-            {/* Cada campo se muestra con su etiqueta en negrita */}
-            <p><strong className="font-bold">Carnet: </strong>{Carne}</p>
-            <p><strong className="font-bold">Estudiante: </strong>{Name}</p>
-            <p><strong className="font-bold">Carrera: </strong>{Carrera}</p>
-            <p><strong className="font-bold">Pensum: </strong>{Pensum}</p>
-            <p><strong className="font-bold">Prom. ciclo anterior: </strong>{Promedio_Ciclo_Anterior}</p>
-            <p><strong className="font-bold">Grado: </strong>{Grado}</p>
-            <p><strong className="font-bold">Carga máxima: </strong>{Carga_MAX}</p>
+const Card_Estudiante = () => {
+    const { 
+        carne,
+        name,
+        carrera,
+        pensum,
+        promedioCicloAnterior,
+        grado,
+        cargaMaxima
+    } = useStudent();
+
+    return (
+        <div className="w-full max-w-4xl p-8 bg-gray-100 border border-gray-200 rounded-lg mb-6">
+            <div className="space-y-3">
+                <p><strong className="font-bold">Carnet: </strong>{carne}</p>
+                <p><strong className="font-bold">Estudiante: </strong>{name}</p>
+                <p><strong className="font-bold">Carrera: </strong>{carrera}</p>
+                <p><strong className="font-bold">Pensum: </strong>{pensum}</p>
+                <p><strong className="font-bold">Prom. ciclo anterior: </strong>{promedioCicloAnterior}</p>
+                <p><strong className="font-bold">Grado: </strong>{grado}</p>
+                <p><strong className="font-bold">Carga máxima: </strong>{cargaMaxima}</p>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // Validación estricta de propiedades
 Card_Estudiante.propTypes = {
