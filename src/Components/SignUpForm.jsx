@@ -9,7 +9,7 @@
  * Formulario reutilizable para el registro de nuevos usuarios del sistema.
  * Incluye validaciones y manejo de estados para todos los campos requeridos.
  * Actualizado para incluir campos de correo y contraseña.
- * Soporta datos iniciales para modo de edición.
+ * Ahora soporta datos iniciales para modo edición.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -59,8 +59,8 @@ const SignUpForm = ({
     onSubmit, 
     isLoading = false, 
     error = '', 
-    initialData = null, // Nuevo prop para datos iniciales
-    isEditMode = false // Nuevo prop para indicar si es modo edición
+    initialData = null, // Nuevos datos iniciales
+    isEditMode = false  // Flag para identificar si estamos en modo edición
 }) => {
     // ===== ESTADOS DEL FORMULARIO =====
     const [formData, setFormData] = useState({
@@ -91,20 +91,23 @@ const SignUpForm = ({
                 nombreCompleto: initialData.nombreCompleto || initialData.nombre || '',
                 carnet: initialData.carnet || '',
                 email: initialData.email || '',
-                password: '', // No prellenar contraseñas por seguridad
+                password: '', // Las contraseñas no se pre-llenan por seguridad
                 confirmPassword: '',
                 carrera: initialData.carrera || '',
-                pensum: initialData.pensum?.toString() || '',
-                promedioAnterior: initialData.promedioAnterior?.toString() || initialData.promedio?.toString() || '',
+                pensum: initialData.pensum ? initialData.pensum.toString() : '',
+                promedioAnterior: initialData.promedioAnterior ? initialData.promedioAnterior.toString() : 
+                                 initialData.promedio ? initialData.promedio.toString() : '',
                 grado: initialData.grado || '',
-                cargaMaxima: initialData.cargaMaxima?.toString() || initialData.carga_maxima?.toString() || '',
+                cargaMaxima: initialData.cargaMaxima ? initialData.cargaMaxima.toString() : 
+                            initialData.carga_maxima ? initialData.carga_maxima.toString() : '',
                 estiloAprendizaje: initialData.estiloAprendizaje || initialData.estilo_aprendizaje || '',
                 estiloClase: initialData.estiloClase || initialData.estilo_clase || '',
-                cursosZonaMinima: initialData.cursosZonaMinima?.toString() || initialData.cursos_zona_minima?.toString() || ''
+                cursosZonaMinima: initialData.cursosZonaMinima ? initialData.cursosZonaMinima.toString() : 
+                                 initialData.cursos_zona_minima ? initialData.cursos_zona_minima.toString() : ''
             };
-            
+
             setFormData(mappedData);
-            console.log('✅ Datos mapeados para el formulario:', mappedData);
+            console.log('✅ Datos iniciales cargados:', mappedData);
         }
     }, [initialData, isEditMode]);
 
@@ -288,7 +291,7 @@ const SignUpForm = ({
             estilo_clase: formData.estiloClase // Mapear estiloClase -> estilo_clase
         };
 
-        // Solo incluir contraseña si se está registrando o si se cambió en edición
+        // Solo incluir contraseña si estamos en modo registro o si se está cambiando
         if (!isEditMode || formData.password) {
             dataToSend.password = formData.password;
         }
@@ -351,86 +354,35 @@ const SignUpForm = ({
                     handleInputChange={handleInputChange}
                 />
 
-                {/* Solo mostrar campos de contraseña en registro o si se quiere cambiar en edición */}
-                {!isEditMode && (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormField
-                            label="Contraseña"
-                            name="password"
-                            type="password"
-                            placeholder="••••••••"
-                            formData={formData}
-                            validationErrors={validationErrors}
-                            handleInputChange={handleInputChange}
-                        />
+                {/* Solo mostrar campos de contraseña en modo registro o si se quiere cambiar */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FormField
+                        label={isEditMode ? "Nueva Contraseña (opcional)" : "Contraseña"}
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        required={!isEditMode}
+                        formData={formData}
+                        validationErrors={validationErrors}
+                        handleInputChange={handleInputChange}
+                    />
 
-                        <FormField
-                            label="Confirmar Contraseña"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            formData={formData}
-                            validationErrors={validationErrors}
-                            handleInputChange={handleInputChange}
-                        />
-                    </div>
-                )}
-
-                {/* En modo edición, mostrar opción para cambiar contraseña */}
+                    <FormField
+                        label={isEditMode ? "Confirmar Nueva Contraseña" : "Confirmar Contraseña"}
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        required={!isEditMode || formData.password}
+                        formData={formData}
+                        validationErrors={validationErrors}
+                        handleInputChange={handleInputChange}
+                    />
+                </div>
+                
                 {isEditMode && (
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                id="changePassword"
-                                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                onChange={(e) => {
-                                    if (!e.target.checked) {
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            password: '',
-                                            confirmPassword: ''
-                                        }));
-                                        // Limpiar errores de contraseña
-                                        setValidationErrors(prev => {
-                                            const newErrors = { ...prev };
-                                            delete newErrors.password;
-                                            delete newErrors.confirmPassword;
-                                            return newErrors;
-                                        });
-                                    }
-                                }}
-                            />
-                            <label htmlFor="changePassword" className="text-sm text-gray-700">
-                                Cambiar contraseña
-                            </label>
-                        </div>
-
-                        {/* Mostrar campos de contraseña solo si el checkbox está marcado */}
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <FormField
-                                label="Nueva Contraseña"
-                                name="password"
-                                type="password"
-                                placeholder="••••••••"
-                                required={false}
-                                formData={formData}
-                                validationErrors={validationErrors}
-                                handleInputChange={handleInputChange}
-                            />
-
-                            <FormField
-                                label="Confirmar Nueva Contraseña"
-                                name="confirmPassword"
-                                type="password"
-                                placeholder="••••••••"
-                                required={false}
-                                formData={formData}
-                                validationErrors={validationErrors}
-                                handleInputChange={handleInputChange}
-                            />
-                        </div>
-                    </div>
+                    <p className="text-sm text-gray-600">
+                        💡 Deja los campos de contraseña vacíos si no deseas cambiarla.
+                    </p>
                 )}
             </div>
 
@@ -576,9 +528,9 @@ const SignUpForm = ({
                         isLoading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
-                    {isLoading 
-                        ? (isEditMode ? 'Actualizando...' : 'Registrando...') 
-                        : (isEditMode ? 'Actualizar Perfil' : 'Crear Cuenta')
+                    {isLoading ? 
+                        (isEditMode ? 'Actualizando...' : 'Registrando...') : 
+                        (isEditMode ? 'Actualizar Perfil' : 'Crear Cuenta')
                     }
                 </button>
             </div>
