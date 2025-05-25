@@ -1,37 +1,40 @@
+// @ Front-Profesor-Recommendation-System
+// @ File Name : ProfessorContext.jsx
+// @ Date : 21/05/2025
+// @ Author : Alejandro Jerez, Marcelo Detlefsen
+
+/**
+ * Contexto de Profesores
+ * 
+ * Este archivo proporciona la gestión centralizada de datos de profesores.
+ * Se conecta con la API del backend para obtener información en tiempo real.
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
 import apiService from '../services/apiService';
 
 const ProfessorContext = createContext();
 
 export const ProfessorProvider = ({ children }) => {
+  // ===== ESTADOS DEL CONTEXTO =====
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [dataSource, setDataSource] = useState('loading'); // 'api' | 'mock' | 'loading'
-  
-  const { isUsingMockData } = useAuth();
 
-  const fetchProfessors = async (forceUseMock = false) => {
+  // ===== FUNCIONES PARA MANEJAR PROFESORES =====
+
+  /**
+   * Obtiene todos los profesores desde la API
+   */
+  const fetchProfessors = async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Si el usuario está usando datos mock o se fuerza el uso de mock
-      if (isUsingMockData || forceUseMock) {
-        console.log('📚 Cargando profesores MOCK');
-        setProfessors(getMockProfessors());
-        setDataSource('mock');
-        return;
-      }
-
-      // Intentar obtener datos reales de la API
-      console.log('🔗 Obteniendo profesores desde API...');
       const response = await apiService.getProfesores();
-      
-      if (response.success && response.data && response.data.length > 0) {
+      if (response.success && response.data) {
+        // Mapear los datos de la API al formato esperado por el frontend
         const mappedProfessors = response.data.map(prof => ({
-          id: prof.nombre,
+          id: prof.nombre, // Usando nombre como ID único
           name: prof.nombre,
           department: prof.departamento || 'Departamento no especificado',
           specialties: prof.especialidades || ['Sin especialidades'],
@@ -45,39 +48,35 @@ export const ProfessorProvider = ({ children }) => {
           availability: prof.disponibilidad,
           totalScore: prof.puntuacion_total
         }));
-        
         setProfessors(mappedProfessors);
-        setDataSource('api');
-        console.log('✅ Profesores cargados desde API REAL');
-      } else {
-        throw new Error('No se encontraron profesores en la API');
       }
     } catch (err) {
-      console.warn('⚠️ Error obteniendo profesores de API:', err.message);
-      console.log('📚 Fallback a datos MOCK');
+      console.error('Error fetching professors:', err);
+      setError(err.message);
+      // Cargar datos mock en caso de error
       setProfessors(getMockProfessors());
-      setDataSource('mock');
-      setError(`Usando datos de demostración. Error API: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Obtiene un profesor específico por ID
+   */
   const getProfessorById = (professorId) => {
     return professors.find(prof => prof.id === professorId);
   };
 
+  /**
+   * Crea un nuevo profesor
+   */
   const createProfessor = async (professorData) => {
-    if (dataSource === 'mock') {
-      throw new Error('No se puede crear profesores en modo demostración');
-    }
-    
     setLoading(true);
     setError(null);
     try {
       const response = await apiService.createProfesor(professorData);
       if (response.success) {
-        await fetchProfessors();
+        await fetchProfessors(); // Recargar la lista
         return response.data;
       }
     } catch (err) {
@@ -89,17 +88,16 @@ export const ProfessorProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Actualiza un profesor existente
+   */
   const updateProfessor = async (professorId, updateData) => {
-    if (dataSource === 'mock') {
-      throw new Error('No se puede actualizar profesores en modo demostración');
-    }
-    
     setLoading(true);
     setError(null);
     try {
       const response = await apiService.updateProfesor(professorId, updateData);
       if (response.success) {
-        await fetchProfessors();
+        await fetchProfessors(); // Recargar la lista
         return response.data;
       }
     } catch (err) {
@@ -111,17 +109,11 @@ export const ProfessorProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Obtiene profesores que imparten un curso específico
+   */
   const getProfessorsByCourse = async (courseCode) => {
     try {
-      if (dataSource === 'mock') {
-        // Filtrar profesores mock por curso
-        return professors.filter(prof => 
-          prof.courses.some(course => 
-            course.toLowerCase().includes(courseCode.toLowerCase())
-          )
-        );
-      }
-
       const response = await apiService.getProfesoresPorCurso(courseCode);
       if (response.success && response.data) {
         return response.data.map(prof => ({
@@ -142,10 +134,10 @@ export const ProfessorProvider = ({ children }) => {
     }
   };
 
-  // Datos mock mejorados
+  // ===== DATOS MOCK PARA DESARROLLO =====
   const getMockProfessors = () => [
     {
-      id: "DR. GONZALEZ LOPEZ, MARIA ELENA",
+      id: "1",
       name: "DR. GONZALEZ LOPEZ, MARIA ELENA",
       department: "Matemáticas",
       specialties: ["Cálculo", "Álgebra Lineal", "Estadística"],
@@ -160,7 +152,7 @@ export const ProfessorProvider = ({ children }) => {
       totalScore: 85.5
     },
     {
-      id: "ING. RODRIGUEZ CASTRO, CARLOS ALBERTO",
+      id: "2", 
       name: "ING. RODRIGUEZ CASTRO, CARLOS ALBERTO",
       department: "Ingeniería",
       specialties: ["Programación", "Algoritmos", "Bases de Datos"],
@@ -175,7 +167,7 @@ export const ProfessorProvider = ({ children }) => {
       totalScore: 78.2
     },
     {
-      id: "LIC. MARTINEZ FLORES, ANA SOFIA",
+      id: "3",
       name: "LIC. MARTINEZ FLORES, ANA SOFIA",
       department: "Estadística",
       specialties: ["Estadística Descriptiva", "Probabilidad", "Análisis de Datos"],
@@ -190,7 +182,7 @@ export const ProfessorProvider = ({ children }) => {
       totalScore: 80.1
     },
     {
-      id: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
+      id: "4",
       name: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
       department: "Matemáticas",
       specialties: ["Cálculo Avanzado", "Ecuaciones Diferenciales"],
@@ -205,7 +197,7 @@ export const ProfessorProvider = ({ children }) => {
       totalScore: 92.3
     },
     {
-      id: "ING. VARGAS CRUZ, PATRICIA ISABEL",
+      id: "5",
       name: "ING. VARGAS CRUZ, PATRICIA ISABEL",
       department: "Ingeniería",
       specialties: ["Álgebra", "Matemáticas Discretas"],
@@ -221,21 +213,21 @@ export const ProfessorProvider = ({ children }) => {
     }
   ];
 
+  // ===== EFECTOS =====
   useEffect(() => {
     fetchProfessors();
-  }, [isUsingMockData]); // Recargar cuando cambie el modo de datos
+  }, []);
 
+  // ===== VALOR DEL CONTEXTO =====
   const value = {
     professors,
     loading,
     error,
-    dataSource, // Nuevo: indica la fuente de datos
     fetchProfessors,
     getProfessorById,
     createProfessor,
     updateProfessor,
-    getProfessorsByCourse,
-    isUsingMockData: dataSource === 'mock' // Helper para componentes
+    getProfessorsByCourse
   };
 
   return (
@@ -245,6 +237,7 @@ export const ProfessorProvider = ({ children }) => {
   );
 };
 
+// Hook personalizado para usar el contexto
 export const useProfessor = () => {
   const context = useContext(ProfessorContext);
   if (context === undefined) {
