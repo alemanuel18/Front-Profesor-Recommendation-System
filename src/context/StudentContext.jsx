@@ -22,9 +22,10 @@ export const StudentProvider = ({ children }) => {
     try {
       // Si el usuario está usando datos mock o se fuerza el uso de mock
       if (isUsingMockData || forceUseMock) {
-        console.log('👤 Cargando datos de estudiante MOCK');
-        setStudentData(getMockStudentData(studentName));
+        console.log('👤 No se pueden cargar datos reales, API no disponible');
+        setStudentData(getUserBasedData(studentName));
         setDataSource('mock');
+        setError('API no disponible. Mostrando solo datos básicos del usuario.');
         return;
       }
 
@@ -57,10 +58,10 @@ export const StudentProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn('⚠️ Error obteniendo datos de estudiante de API:', err.message);
-      console.log('👤 Fallback a datos MOCK');
-      setStudentData(getMockStudentData(studentName));
+      console.log('👤 Usando solo datos básicos del usuario autenticado');
+      setStudentData(getUserBasedData(studentName));
       setDataSource('mock');
-      setError(`Usando datos de demostración. Error API: ${err.message}`);
+      setError(`API no disponible: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -182,21 +183,29 @@ export const StudentProvider = ({ children }) => {
     }
   };
 
-  // Datos mock mejorados
-  const getMockStudentData = (studentName) => ({
-    id: student.id,
-    carne: student.carne,
-    name: studentName,
-    carrera: student.carrera,
-    pensum: student.pensum,
-    promedioCicloAnterior: student.promedio_ciclo_anterior,
-    grado: student.grado,
-    cargaMaxima: student.carga_maxima,
-    estiloAprendizaje: student.estilo_aprendizaje,
-    estiloClase: student.estilo_clase,
-    horasEstudio: student.horas_estudio,
-    participacionClase: student.participacion_clase
-  });
+  // Función para obtener datos del usuario autenticado
+  const getUserBasedData = (studentName) => {
+    // Solo usar datos del usuario autenticado, sin datos de demostración
+    if (currentUser) {
+      return {
+        id: currentUser.carnet || currentUser.id,
+        carne: currentUser.carnet,
+        name: currentUser.name || studentName,
+        carrera: currentUser.carrera, // Se llenará desde la API si está disponible
+        pensum: null,
+        promedioCicloAnterior: null,
+        grado: null,
+        cargaMaxima: null,
+        estiloAprendizaje: null,
+        estiloClase: null,
+        horasEstudio: null,
+        participacionClase: null
+      };
+    }
+
+    // Si no hay usuario autenticado, retornar null
+    return null;
+  };
 
   const getMockRecommendations = () => [
     {
@@ -247,25 +256,16 @@ export const StudentProvider = ({ children }) => {
   const getCurrentUserData = () => {
     if (!currentUser) return null;
 
-    // Si tenemos datos de la API o mock, usarlos
-    if (studentData) {
+    // Si tenemos datos de la API, usarlos
+    if (studentData && dataSource === 'api') {
       return studentData;
     }
 
-    // Como fallback, usar datos del usuario autenticado
-    return {
-      id: currentUser.id,
-      carne: currentUser.carnet || currentUser.id,
-      name: currentUser.name,
-      carrera: null, // Se llenará desde la API
-      pensum: null,
-      promedioCicloAnterior: null,
-      grado: null,
-      cargaMaxima: null
-    };
+    // Si no hay datos de API disponible, usar solo datos básicos del usuario autenticado
+    return getUserBasedData(currentUser.name);
   };
 
-  // Obtener datos actuales del usuario (sin usar getMockStudentData como fallback principal)
+  // Obtener datos actuales del usuario
   const currentStudentData = getCurrentUserData();
 
   const value = {
