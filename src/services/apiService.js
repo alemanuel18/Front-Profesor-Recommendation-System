@@ -41,6 +41,22 @@ class ApiService {
       }
   }
 
+  async login(credentials) {
+    return this.makeRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
+  async verifyToken(token) {
+    return this.makeRequest('/auth/verify', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
+  
   // ===== ESTUDIANTES =====
   
   // Obtener todos los estudiantes

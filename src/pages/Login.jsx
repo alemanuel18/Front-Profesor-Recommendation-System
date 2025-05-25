@@ -140,7 +140,7 @@ const Login = () => {
                 estilo_aprendizaje: formData.estiloAprendizaje,
                 estilo_clase: formData.estiloClase,
                 cursos_zona_minima: parseInt(formData.cursosZonaMinima),
-                email: `${formData.carnet}@uvg.edu.gt`,
+                email: formData.email,
                 password: formData.password
             };
 
