@@ -2,7 +2,7 @@
 // @ File Name : AuthContext.jsx
 // @ Date : 11/05/2025
 // @ Author : Alejandro Manuel, Marcelo Detlefsen
-// @ Modified : 24/05/2025
+// @ Modified : 25/05/2025
 
 /**
  * Contexto de Autenticación
@@ -10,7 +10,7 @@
  * Este archivo proporciona la gestión centralizada de autenticación para la aplicación.
  * Características principales:
  * - Manejo de sesión de usuario
- * - Control de roles (estudiante/administrador)
+ * - Control de roles (estudiante/administrador) obtenidos de la API
  * - Persistencia de sesión usando localStorage
  * - Funciones de login/logout
  */
@@ -38,7 +38,8 @@ export const AuthProvider = ({ children }) => {
             id: localStorage.getItem('userId'),
             name: localStorage.getItem('userName'),
             role: localStorage.getItem('userRole') || 'student',
-            email: localStorage.getItem('userEmail')
+            email: localStorage.getItem('userEmail'),
+            carnet: localStorage.getItem('userCarnet')
           });
         } else {
           logout();
@@ -54,6 +55,42 @@ export const AuthProvider = ({ children }) => {
   // ===== FUNCIONES DE AUTENTICACIÓN =====
   
   /**
+   * Función para determinar el rol del usuario
+   * @param {Object} userData - Datos del usuario de la API
+   * @returns {string} - rol del usuario ('admin' o 'student')
+   */
+  const determineUserRole = (userData) => {
+    // Opción 1: El backend devuelve el rol directamente
+    if (userData.role) {
+      return userData.role;
+    }
+    
+    // Opción 2: El backend devuelve un campo isAdmin
+    if (userData.isAdmin === true) {
+      return 'admin';
+    }
+    
+    // Opción 3: Basado en el email (si es @admin.uvg.edu.gt)
+    if (userData.email && userData.email.includes('@admin.uvg')) {
+      return 'admin';
+    }
+    
+    // Opción 4: Basado en carnet específico (ejemplo: carnets que empiecen con 99999)
+    if (userData.carnet && userData.carnet.startsWith('99999')) {
+      return 'admin';
+    }
+    
+    // Opción 5: Lista de carnets de administradores
+    const adminCarnets = ['77777', '99999', '00000']; // Agrega los carnets de admin
+    if (userData.carnet && adminCarnets.includes(userData.carnet)) {
+      return 'admin';
+    }
+    
+    // Por defecto, es estudiante
+    return 'student';
+  };
+
+  /**
    * Función de inicio de sesión
    * Valida credenciales y establece la sesión del usuario
    * @param {Object} credentials - Credenciales del usuario (email, password)
@@ -65,7 +102,6 @@ export const AuthProvider = ({ children }) => {
         console.log('🔗 Intentando autenticación con API...');
         
         // Preparar credenciales para la API del backend
-        // El backend espera carnet o email en el login
         const loginData = {
           password: credentials.password
         };
@@ -85,10 +121,13 @@ export const AuthProvider = ({ children }) => {
         
         // Si la API responde exitosamente
         if (response && response.success) {
+          // Determinar el rol del usuario basado en los datos de la API
+          const userRole = determineUserRole(response.data);
+          
           const userData = {
             id: response.data.carnet,
             name: response.data.nombre,
-            role: "student", 
+            role: userRole, // Usar el rol determinado por la función
             email: response.data.email,
             carnet: response.data.carnet
           };
@@ -102,7 +141,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('userCarnet', userData.carnet);
           
           setCurrentUser(userData);
-          console.log('✅ Autenticación exitosa con API');
+          console.log(`✅ Autenticación exitosa con API - Rol: ${userRole}`);
           return true;
         }
       } catch (apiError) {
@@ -139,10 +178,11 @@ export const AuthProvider = ({ children }) => {
       } else if (credentials.email === "admin@uvg.edu.gt" && credentials.password === "admin123") {
         // Datos de usuario administrador
         const userData = {
-          carnet: "77777",
+          id: "77777",
           name: "ADMINISTRADOR UVG",
           role: "admin",
-          email: credentials.email
+          email: credentials.email,
+          carnet: "77777"
         };
         
         // Persistir sesión en localStorage
@@ -151,6 +191,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userRole', userData.role);
         localStorage.setItem('userEmail', userData.email);
+        localStorage.setItem('userCarnet', userData.carnet);
         
         setCurrentUser(userData);
         console.log('✅ Login exitoso con credenciales de demostración (admin)');
@@ -169,6 +210,10 @@ export const AuthProvider = ({ children }) => {
    */
   const verifyToken = async (token) => {
     try {
+      // Si tienes un endpoint para verificar tokens, úsalo aquí
+      // const response = await apiService.verifyToken(token);
+      // return response && response.success;
+      
       // Como no tienes endpoint de verify en el backend, simular validación
       return token && token.length > 0;
     } catch (error) {
