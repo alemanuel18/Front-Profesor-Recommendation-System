@@ -113,7 +113,8 @@ const Login = () => {
         try {
             console.log('📝 Intentando registrar usuario...');
             
-            // Validación básica
+            // Validación básica - ya no necesitamos validar confirmPassword aquí
+            // porque SignUpForm ya lo hace internamente
             if (!formData.email || !formData.password) {
                 throw new Error('Por favor completa todos los campos requeridos');
             }
@@ -123,36 +124,16 @@ const Login = () => {
                 throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
             }
 
-            // Validación de confirmación de contraseña
-            if (formData.password !== formData.confirmPassword) {
-                throw new Error('Las contraseñas no coinciden');
-            }
-
-            // Preparar datos para el registro
-            const registrationData = {
-                nombre: `${formData.nombres} ${formData.apellidos}`,
-                carnet: formData.carnet,
-                carrera: formData.carrera,
-                pensum: formData.pensum,
-                promedio: parseFloat(formData.promedioAnterior),
-                grado: formData.grado,
-                carga_maxima: parseInt(formData.cargaMaxima),
-                estilo_aprendizaje: formData.estiloAprendizaje,
-                estilo_clase: formData.estiloClase,
-                cursos_zona_minima: parseInt(formData.cursosZonaMinima),
-                email: formData.email,
-                password: formData.password
-            };
-
-            console.log('Enviando datos:', registrationData); 
+            console.log('Enviando datos:', formData); 
             
              // Llamar a la API para registrar
-            const response = await apiService.createEstudiante(registrationData);
+            const response = await apiService.createEstudiante(formData);
             
             if (response && response.success) {
                 alert('✅ Registro exitoso! Ahora puedes iniciar sesión');
                 setIsSignUpMode(false);
-                setEmail(`${formData.carnet}@uvg.edu.gt`);
+                // Usar el email del formData directamente
+                setEmail(formData.email);
             } else {
                 throw new Error(response?.message || '❌ Error en el registro');
             }

@@ -23,7 +23,9 @@ const FormField = ({
     placeholder = '',
     formData,
     validationErrors,
-    handleInputChange
+    handleInputChange,
+    min,
+    max
 }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium leading-6 text-gray-900">
@@ -38,6 +40,8 @@ const FormField = ({
                     value={formData[name]}
                     onChange={handleInputChange}
                     placeholder={placeholder}
+                    min={min}
+                    max={max}
                     className={`block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ${
                         validationErrors[name] ? 'ring-red-300' : 'ring-gray-300'
                     } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6`}
@@ -233,8 +237,24 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             return;
         }
 
+        // Transformar los datos para que coincidan con el backend
+        const dataToSend = {
+            nombre: formData.nombreCompleto, // Mapear nombreCompleto -> nombre
+            carnet: formData.carnet,
+            email: formData.email,
+            password: formData.password,
+            carrera: formData.carrera,
+            pensum: parseInt(formData.pensum),
+            promedio: parseFloat(formData.promedioAnterior), // Mapear promedioAnterior -> promedio
+            grado: formData.grado,
+            carga_maxima: parseInt(formData.cargaMaxima), // Mapear cargaMaxima -> carga_maxima
+            cursos_zona_minima: parseInt(formData.cursosZonaMinima), // Mapear cursosZonaMinima -> cursos_zona_minima
+            estilo_aprendizaje: formData.estiloAprendizaje, // Mapear estiloAprendizaje -> estilo_aprendizaje
+            estilo_clase: formData.estiloClase // Mapear estiloClase -> estilo_clase
+        };
+
         setValidationErrors({});
-        onSubmit(formData);
+        onSubmit(dataToSend);
     };
 
     // ===== RENDERIZADO DEL COMPONENTE =====
@@ -385,11 +405,6 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
-                    value={formData.cargaMaxima}
-                    onChange={(e) => {
-                        const value = Math.min(7, Math.max(1, e.target.value)); // Fuerza entre 1-7
-                        handleInputChange({target: {name: 'cargaMaxima', value}});
-                    }}
                 />
 
                 <FormField
