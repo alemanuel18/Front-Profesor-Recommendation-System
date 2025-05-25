@@ -2,60 +2,63 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import apiService from '../services/apiService';
 
-const ProfessorContext = createContext();
+const StudentContext = createContext();
 
-export const ProfessorProvider = ({ children }) => {
-  const [professors, setProfessors] = useState([]);
+export const StudentProvider = ({ children }) => {
+  const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [dataSource, setDataSource] = useState('loading'); // 'api' | 'mock' | 'loading'
   
-  const { isUsingMockData } = useAuth();
+  const { currentUser, isUsingMockData } = useAuth();
 
-  const fetchProfessors = async (forceUseMock = false) => {
+  const fetchStudentData = async (studentName, forceUseMock = false) => {
+    if (!studentName) return;
+    
     setLoading(true);
     setError(null);
     
     try {
       // Si el usuario está usando datos mock o se fuerza el uso de mock
       if (isUsingMockData || forceUseMock) {
-        console.log('📚 Cargando profesores MOCK');
-        setProfessors(getMockProfessors());
+        console.log('👤 Cargando datos de estudiante MOCK');
+        setStudentData(getMockStudentData(studentName));
         setDataSource('mock');
         return;
       }
 
       // Intentar obtener datos reales de la API
-      console.log('🔗 Obteniendo profesores desde API...');
-      const response = await apiService.getProfesores();
+      console.log('🔗 Obteniendo datos de estudiante desde API...');
+      const response = await apiService.getEstudiante(studentName);
       
-      if (response.success && response.data && response.data.length > 0) {
-        const mappedProfessors = response.data.map(prof => ({
-          id: prof.nombre,
-          name: prof.nombre,
-          department: prof.departamento || 'Departamento no especificado',
-          specialties: prof.especialidades || ['Sin especialidades'],
-          rating: prof.evaluacion_docente || 0,
-          image: prof.imagen || "/api/placeholder/150/150",
-          courses: prof.cursos || [],
-          teachingStyle: prof.estilo_enseñanza,
-          classStyle: prof.estilo_clase,
-          experience: prof.años_experiencia,
-          approvalRate: prof.porcentaje_aprobados,
-          availability: prof.disponibilidad,
-          totalScore: prof.puntuacion_total
-        }));
+      if (response.success && response.data) {
+        const student = response.data;
+        const realStudentData = {
+          id: student.id || student.carne,
+          carne: student.carne,
+          name: studentName,
+          carrera: student.carrera,
+          pensum: student.pensum,
+          promedioCicloAnterior: student.promedio_ciclo_anterior,
+          grado: student.grado,
+          cargaMaxima: student.carga_maxima,
+          estiloAprendizaje: student.estilo_aprendizaje,
+          estiloClase: student.estilo_clase,
+          horasEstudio: student.horas_estudio,
+          participacionClase: student.participacion_clase
+        };
         
-        setProfessors(mappedProfessors);
+        setStudentData(realStudentData);
         setDataSource('api');
-        console.log('✅ Profesores cargados desde API REAL');
+        console.log('✅ Datos de estudiante cargados desde API REAL');
       } else {
-        throw new Error('No se encontraron profesores en la API');
+        throw new Error('No se encontraron datos del estudiante en la API');
       }
     } catch (err) {
-      console.warn('⚠️ Error obteniendo profesores de API:', err.message);
-      console.log('📚 Fallback a datos MOCK');
-      setProfessors(getMockProfessors());
+      console.warn('⚠️ Error obteniendo datos de estudiante de API:', err.message);
+      console.log('👤 Fallback a datos MOCK');
+      setStudentData(getMockStudentData(studentName));
       setDataSource('mock');
       setError(`Usando datos de demostración. Error API: ${err.message}`);
     } finally {
@@ -63,192 +66,221 @@ export const ProfessorProvider = ({ children }) => {
     }
   };
 
-  const getProfessorById = (professorId) => {
-    return professors.find(prof => prof.id === professorId);
-  };
-
-  const createProfessor = async (professorData) => {
-    if (dataSource === 'mock') {
-      throw new Error('No se puede crear profesores en modo demostración');
-    }
+  const fetchRecommendations = async (studentName, limit = null, forceUseMock = false) => {
+    if (!studentName) return [];
     
     setLoading(true);
     setError(null);
-    try {
-      const response = await apiService.createProfesor(professorData);
-      if (response.success) {
-        await fetchProfessors();
-        return response.data;
-      }
-    } catch (err) {
-      console.error('Error creating professor:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfessor = async (professorId, updateData) => {
-    if (dataSource === 'mock') {
-      throw new Error('No se puede actualizar profesores en modo demostración');
-    }
     
-    setLoading(true);
-    setError(null);
     try {
-      const response = await apiService.updateProfesor(professorId, updateData);
-      if (response.success) {
-        await fetchProfessors();
-        return response.data;
-      }
-    } catch (err) {
-      console.error('Error updating professor:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getProfessorsByCourse = async (courseCode) => {
-    try {
-      if (dataSource === 'mock') {
-        // Filtrar profesores mock por curso
-        return professors.filter(prof => 
-          prof.courses.some(course => 
-            course.toLowerCase().includes(courseCode.toLowerCase())
-          )
-        );
+      // Si estamos usando datos mock
+      if (dataSource === 'mock' || forceUseMock) {
+        console.log('🎯 Generando recomendaciones MOCK');
+        const mockRecommendations = getMockRecommendations();
+        setRecommendations(mockRecommendations);
+        return mockRecommendations;
       }
 
-      const response = await apiService.getProfesoresPorCurso(courseCode);
-      if (response.success && response.data) {
-        return response.data.map(prof => ({
-          id: prof.nombre,
-          name: prof.nombre,
-          department: prof.departamento || 'Departamento no especificado',
-          rating: prof.evaluacion_docente || 0,
-          image: prof.imagen || "/api/placeholder/150/150",
-          teachingStyle: prof.estilo_enseñanza,
-          classStyle: prof.estilo_clase,
-          totalScore: prof.puntuacion_total
+      // Intentar obtener recomendaciones reales
+      console.log('🔗 Obteniendo recomendaciones desde API...');
+      const response = await apiService.getRecomendaciones(studentName, limit);
+      
+      if (response.success && response.data && response.data.length > 0) {
+        const mappedRecommendations = response.data.map(rec => ({
+          professorId: rec.profesor_id || rec.nombre,
+          professorName: rec.nombre || rec.profesor_nombre,
+          compatibilityScore: rec.puntuacion_compatibilidad || rec.score,
+          department: rec.departamento,
+          teachingStyle: rec.estilo_enseñanza,
+          classStyle: rec.estilo_clase,
+          rating: rec.evaluacion_docente,
+          experience: rec.años_experiencia,
+          approvalRate: rec.porcentaje_aprobados,
+          reasons: rec.razones_recomendacion || []
         }));
+        
+        setRecommendations(mappedRecommendations);
+        console.log('✅ Recomendaciones cargadas desde API REAL');
+        return mappedRecommendations;
+      } else {
+        throw new Error('No se encontraron recomendaciones en la API');
       }
-      return [];
     } catch (err) {
-      console.error('Error fetching professors by course:', err);
-      return [];
+      console.warn('⚠️ Error obteniendo recomendaciones de API:', err.message);
+      console.log('🎯 Fallback a recomendaciones MOCK');
+      const mockRecommendations = getMockRecommendations();
+      setRecommendations(mockRecommendations);
+      return mockRecommendations;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerCourseApproval = async (studentName, professorName, courseCode) => {
+    if (dataSource === 'mock') {
+      console.log('⚠️ Simulando registro de aprobación (modo demostración)');
+      return true; // Simular éxito en modo mock
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiService.registrarAprobacion(studentName, professorName, courseCode);
+      if (response.success) {
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error registering course approval:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createStudent = async (studentData) => {
+    if (dataSource === 'mock') {
+      throw new Error('No se puede crear estudiantes en modo demostración');
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiService.createEstudiante(studentData);
+      if (response.success) {
+        return response.data;
+      }
+    } catch (err) {
+      console.error('Error creating student:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStudent = async (studentName, updateData) => {
+    if (dataSource === 'mock') {
+      throw new Error('No se puede actualizar estudiante en modo demostración');
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiService.updateEstudiante(studentName, updateData);
+      if (response.success) {
+        await fetchStudentData(studentName);
+        return response.data;
+      }
+    } catch (err) {
+      console.error('Error updating student:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Datos mock mejorados
-  const getMockProfessors = () => [
+  const getMockStudentData = (studentName) => ({
+    id: "mock-24678",
+    carne: "24678",
+    name: studentName || "JEREZ MELGAR, ALEJANDRO MANUEL",
+    carrera: "Ingeniería en Ciencias de la Computación",
+    pensum: "2021",
+    promedioCicloAnterior: 85.5,
+    grado: "Segundo año",
+    cargaMaxima: 18,
+    estiloAprendizaje: "visual",
+    estiloClase: "mixta",
+    horasEstudio: 20,
+    participacionClase: 8
+  });
+
+  const getMockRecommendations = () => [
     {
-      id: "DR. GONZALEZ LOPEZ, MARIA ELENA",
-      name: "DR. GONZALEZ LOPEZ, MARIA ELENA",
+      professorId: "DR. GONZALEZ LOPEZ, MARIA ELENA",
+      professorName: "DR. GONZALEZ LOPEZ, MARIA ELENA",
+      compatibilityScore: 92.5,
       department: "Matemáticas",
-      specialties: ["Cálculo", "Álgebra Lineal", "Estadística"],
-      rating: 4.8,
-      image: "/api/placeholder/150/150",
-      courses: ["Cálculo 1", "Álgebra Lineal 1"],
       teachingStyle: "visual",
       classStyle: "teorica",
+      rating: 4.8,
       experience: 12,
       approvalRate: 85,
-      availability: 40,
-      totalScore: 85.5
+      reasons: ["Estilo de enseñanza compatible", "Alta tasa de aprobación", "Experiencia en el área"]
     },
     {
-      id: "ING. RODRIGUEZ CASTRO, CARLOS ALBERTO",
-      name: "ING. RODRIGUEZ CASTRO, CARLOS ALBERTO",
-      department: "Ingeniería",
-      specialties: ["Programación", "Algoritmos", "Bases de Datos"],
-      rating: 4.5,
-      image: "/api/placeholder/150/150",
-      courses: ["Programación 1", "Estructuras de Datos"],
-      teachingStyle: "kinestesico",
-      classStyle: "practica",
-      experience: 8,
-      approvalRate: 78,
-      availability: 35,
-      totalScore: 78.2
-    },
-    {
-      id: "LIC. MARTINEZ FLORES, ANA SOFIA",
-      name: "LIC. MARTINEZ FLORES, ANA SOFIA",
-      department: "Estadística",
-      specialties: ["Estadística Descriptiva", "Probabilidad", "Análisis de Datos"],
-      rating: 4.6,
-      image: "/api/placeholder/150/150",
-      courses: ["Estadística 1", "Probabilidad y Estadística"],
-      teachingStyle: "auditivo",
-      classStyle: "mixta",
-      experience: 6,
-      approvalRate: 82,
-      availability: 30,
-      totalScore: 80.1
-    },
-    {
-      id: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
-      name: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
+      professorId: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
+      professorName: "DR. HERNANDEZ MORALES, LUIS FERNANDO",
+      compatibilityScore: 88.3,
       department: "Matemáticas",
-      specialties: ["Cálculo Avanzado", "Ecuaciones Diferenciales"],
-      rating: 4.9,
-      image: "/api/placeholder/150/150",
-      courses: ["Cálculo 2", "Cálculo 3"],
       teachingStyle: "visual",
       classStyle: "teorica",
+      rating: 4.9,
       experience: 15,
       approvalRate: 90,
-      availability: 25,
-      totalScore: 92.3
+      reasons: ["Excelente evaluación docente", "Método visual compatible", "Gran experiencia"]
     },
     {
-      id: "ING. VARGAS CRUZ, PATRICIA ISABEL",
-      name: "ING. VARGAS CRUZ, PATRICIA ISABEL",
-      department: "Ingeniería",
-      specialties: ["Álgebra", "Matemáticas Discretas"],
-      rating: 4.3,
-      image: "/api/placeholder/150/150",
-      courses: ["Álgebra Lineal 1", "Matemáticas Discretas"],
-      teachingStyle: "kinestesico",
-      classStyle: "practica",
-      experience: 5,
-      approvalRate: 75,
-      availability: 45,
-      totalScore: 75.8
+      professorId: "LIC. MARTINEZ FLORES, ANA SOFIA",
+      professorName: "LIC. MARTINEZ FLORES, ANA SOFIA",
+      compatibilityScore: 82.1,
+      department: "Estadística",
+      teachingStyle: "auditivo",
+      classStyle: "mixta",
+      rating: 4.6,
+      experience: 6,
+      approvalRate: 82,
+      reasons: ["Clase mixta compatible", "Buena tasa de aprobación", "Enfoque práctico"]
     }
   ];
 
   useEffect(() => {
-    fetchProfessors();
-  }, [isUsingMockData]); // Recargar cuando cambie el modo de datos
+    if (currentUser && currentUser.name) {
+      fetchStudentData(currentUser.name);
+    }
+  }, [currentUser, isUsingMockData]); // Recargar cuando cambie el usuario o el modo de datos
+
+  // Datos actuales con fallback
+  const currentStudentData = studentData || getMockStudentData(currentUser?.name);
 
   const value = {
-    professors,
+    studentData: currentStudentData,
     loading,
     error,
+    recommendations,
     dataSource, // Nuevo: indica la fuente de datos
-    fetchProfessors,
-    getProfessorById,
-    createProfessor,
-    updateProfessor,
-    getProfessorsByCourse,
-    isUsingMockData: dataSource === 'mock' // Helper para componentes
+    fetchStudentData,
+    fetchRecommendations,
+    registerCourseApproval,
+    createStudent,
+    updateStudent,
+    isUsingMockData: dataSource === 'mock', // Helper para componentes
+    
+    // Propiedades individuales para compatibilidad
+    id: currentStudentData?.id,
+    carne: currentStudentData?.carne,
+    name: currentStudentData?.name,
+    carrera: currentStudentData?.carrera,
+    pensum: currentStudentData?.pensum,
+    promedioCicloAnterior: currentStudentData?.promedioCicloAnterior,
+    grado: currentStudentData?.grado,
+    cargaMaxima: currentStudentData?.cargaMaxima
   };
 
   return (
-    <ProfessorContext.Provider value={value}>
+    <StudentContext.Provider value={value}>
       {children}
-    </ProfessorContext.Provider>
+    </StudentContext.Provider>
   );
 };
 
-export const useProfessor = () => {
-  const context = useContext(ProfessorContext);
+export const useStudent = () => {
+  const context = useContext(StudentContext);
   if (context === undefined) {
-    throw new Error('useProfessor debe ser usado dentro de un ProfessorProvider');
+    throw new Error('useStudent debe ser usado dentro de un StudentProvider');
   }
   return context;
 };
