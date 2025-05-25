@@ -11,13 +11,13 @@
  * Características:
  * - Muestra información detallada del estudiante
  * - Diseño claro y organizado
- * - Validación de tipos de datos
+ * - Obtiene datos reales del usuario autenticado
  * - Presentación consistente de la información
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useStudent } from '../../context/StudentContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Card_Estudiante = () => {
     const { 
@@ -27,34 +27,70 @@ const Card_Estudiante = () => {
         pensum,
         promedioCicloAnterior,
         grado,
-        cargaMaxima
+        cargaMaxima,
+        loading,
+        error,
+        dataSource
     } = useStudent();
+
+    const { currentUser } = useAuth();
+
+    // Mostrar loading mientras se cargan los datos
+    if (loading) {
+        return (
+            <div className="w-full max-w-4xl p-8 bg-gray-100 border border-gray-200 rounded-lg mb-6">
+                <div className="animate-pulse">
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-2/3 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/3 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-3"></div>
+                </div>
+            </div>
+        );
+    }
+
+    // Mostrar error si hay algún problema
+    if (error && dataSource !== 'mock') {
+        return (
+            <div className="w-full max-w-4xl p-8 bg-red-50 border border-red-200 rounded-lg mb-6">
+                <div className="text-red-700">
+                    <p className="font-bold">Error al cargar datos del estudiante:</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-4xl p-8 bg-gray-100 border border-gray-200 rounded-lg mb-6">
+            {/* Indicador de fuente de datos */}
+            {dataSource === 'mock' && (
+                <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-yellow-800 text-sm">
+                    ⚠️ Mostrando datos de demostración (API no disponible)
+                </div>
+            )}
+            
             <div className="space-y-3">
-                <p><strong className="font-bold">Carnet: </strong>{carne}</p>
-                <p><strong className="font-bold">Estudiante: </strong>{name}</p>
-                <p><strong className="font-bold">Carrera: </strong>{carrera}</p>
-                <p><strong className="font-bold">Pensum: </strong>{pensum}</p>
-                <p><strong className="font-bold">Prom. ciclo anterior: </strong>{promedioCicloAnterior}</p>
-                <p><strong className="font-bold">Grado: </strong>{grado}</p>
-                <p><strong className="font-bold">Carga máxima: </strong>{cargaMaxima}</p>
+                <p><strong className="font-bold">Carnet: </strong>{carne || currentUser?.carnet || 'No disponible'}</p>
+                <p><strong className="font-bold">Estudiante: </strong>{name || currentUser?.name || 'No disponible'}</p>
+                <p><strong className="font-bold">Carrera: </strong>{carrera || 'No disponible'}</p>
+                <p><strong className="font-bold">Pensum: </strong>{pensum || 'No disponible'}</p>
+                <p><strong className="font-bold">Prom. ciclo anterior: </strong>{promedioCicloAnterior || 'No disponible'}</p>
+                <p><strong className="font-bold">Grado: </strong>{grado || 'No disponible'}</p>
+                <p><strong className="font-bold">Carga máxima: </strong>{cargaMaxima || 'No disponible'}</p>
+            </div>
+
+            {/* Información adicional sobre la fuente de datos */}
+            <div className="mt-4 pt-4 border-t border-gray-300">
+                <p className="text-xs text-gray-500">
+                    Fuente de datos: {dataSource === 'api' ? 'API Real' : dataSource === 'mock' ? 'Datos de demostración' : 'Cargando...'}
+                </p>
             </div>
         </div>
     );
-};
-
-// Validación estricta de propiedades
-Card_Estudiante.propTypes = {
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // ID puede ser string o número
-    Carne: PropTypes.string.isRequired, // Carnet es requerido
-    Name: PropTypes.string.isRequired, // Nombre es requerido
-    Carrera: PropTypes.string.isRequired, // Carrera es requerida
-    Pensum: PropTypes.string.isRequired, // Pensum es requerido
-    Promedio_Ciclo_Anterior: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired, // Promedio puede ser string o número
-    Grado: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired, // Grado puede ser string o número
-    Carga_MAX: PropTypes.string.isRequired // Carga máxima es requerida
 };
 
 export default Card_Estudiante;

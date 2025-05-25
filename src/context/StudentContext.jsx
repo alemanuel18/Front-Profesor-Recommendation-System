@@ -10,15 +10,15 @@ export const StudentProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [dataSource, setDataSource] = useState('loading'); // 'api' | 'mock' | 'loading'
-  
+
   const { currentUser, isUsingMockData } = useAuth();
 
   const fetchStudentData = async (studentName, forceUseMock = false) => {
     if (!studentName) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Si el usuario está usando datos mock o se fuerza el uso de mock
       if (isUsingMockData || forceUseMock) {
@@ -31,7 +31,7 @@ export const StudentProvider = ({ children }) => {
       // Intentar obtener datos reales de la API
       console.log('🔗 Obteniendo datos de estudiante desde API...');
       const response = await apiService.getEstudiante(studentName);
-      
+
       if (response.success && response.data) {
         const student = response.data;
         const realStudentData = {
@@ -48,7 +48,7 @@ export const StudentProvider = ({ children }) => {
           horasEstudio: student.horas_estudio,
           participacionClase: student.participacion_clase
         };
-        
+
         setStudentData(realStudentData);
         setDataSource('api');
         console.log('✅ Datos de estudiante cargados desde API REAL');
@@ -68,10 +68,10 @@ export const StudentProvider = ({ children }) => {
 
   const fetchRecommendations = async (studentName, limit = null, forceUseMock = false) => {
     if (!studentName) return [];
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Si estamos usando datos mock
       if (dataSource === 'mock' || forceUseMock) {
@@ -84,7 +84,7 @@ export const StudentProvider = ({ children }) => {
       // Intentar obtener recomendaciones reales
       console.log('🔗 Obteniendo recomendaciones desde API...');
       const response = await apiService.getRecomendaciones(studentName, limit);
-      
+
       if (response.success && response.data && response.data.length > 0) {
         const mappedRecommendations = response.data.map(rec => ({
           professorId: rec.profesor_id || rec.nombre,
@@ -98,7 +98,7 @@ export const StudentProvider = ({ children }) => {
           approvalRate: rec.porcentaje_aprobados,
           reasons: rec.razones_recomendacion || []
         }));
-        
+
         setRecommendations(mappedRecommendations);
         console.log('✅ Recomendaciones cargadas desde API REAL');
         return mappedRecommendations;
@@ -121,7 +121,7 @@ export const StudentProvider = ({ children }) => {
       console.log('⚠️ Simulando registro de aprobación (modo demostración)');
       return true; // Simular éxito en modo mock
     }
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -143,7 +143,7 @@ export const StudentProvider = ({ children }) => {
     if (dataSource === 'mock') {
       throw new Error('No se puede crear estudiantes en modo demostración');
     }
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -164,7 +164,7 @@ export const StudentProvider = ({ children }) => {
     if (dataSource === 'mock') {
       throw new Error('No se puede actualizar estudiante en modo demostración');
     }
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -184,18 +184,18 @@ export const StudentProvider = ({ children }) => {
 
   // Datos mock mejorados
   const getMockStudentData = (studentName) => ({
-    id: "mock-24678",
-    carne: "24678",
-    name: studentName || "JEREZ MELGAR, ALEJANDRO MANUEL",
-    carrera: "Ingeniería en Ciencias de la Computación",
-    pensum: "2021",
-    promedioCicloAnterior: 85.5,
-    grado: "Segundo año",
-    cargaMaxima: 18,
-    estiloAprendizaje: "visual",
-    estiloClase: "mixta",
-    horasEstudio: 20,
-    participacionClase: 8
+    id: student.id,
+    carne: student.carne,
+    name: studentName,
+    carrera: student.carrera,
+    pensum: student.pensum,
+    promedioCicloAnterior: student.promedio_ciclo_anterior,
+    grado: student.grado,
+    cargaMaxima: student.carga_maxima,
+    estiloAprendizaje: student.estilo_aprendizaje,
+    estiloClase: student.estilo_clase,
+    horasEstudio: student.horas_estudio,
+    participacionClase: student.participacion_clase
   });
 
   const getMockRecommendations = () => [
@@ -243,22 +243,44 @@ export const StudentProvider = ({ children }) => {
     }
   }, [currentUser, isUsingMockData]); // Recargar cuando cambie el usuario o el modo de datos
 
-  // Datos actuales con fallback
-  const currentStudentData = studentData || getMockStudentData(currentUser?.name);
+  // Función para obtener datos reales del usuario autenticado
+  const getCurrentUserData = () => {
+    if (!currentUser) return null;
+
+    // Si tenemos datos de la API o mock, usarlos
+    if (studentData) {
+      return studentData;
+    }
+
+    // Como fallback, usar datos del usuario autenticado
+    return {
+      id: currentUser.id,
+      carne: currentUser.carnet || currentUser.id,
+      name: currentUser.name,
+      carrera: null, // Se llenará desde la API
+      pensum: null,
+      promedioCicloAnterior: null,
+      grado: null,
+      cargaMaxima: null
+    };
+  };
+
+  // Obtener datos actuales del usuario (sin usar getMockStudentData como fallback principal)
+  const currentStudentData = getCurrentUserData();
 
   const value = {
     studentData: currentStudentData,
     loading,
     error,
     recommendations,
-    dataSource, // Nuevo: indica la fuente de datos
+    dataSource, // Indica la fuente de datos
     fetchStudentData,
     fetchRecommendations,
     registerCourseApproval,
     createStudent,
     updateStudent,
     isUsingMockData: dataSource === 'mock', // Helper para componentes
-    
+
     // Propiedades individuales para compatibilidad
     id: currentStudentData?.id,
     carne: currentStudentData?.carne,
