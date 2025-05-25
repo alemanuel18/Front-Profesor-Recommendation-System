@@ -129,7 +129,7 @@ class ApiService {
 
   // Obtener profesores por curso
   async getProfesoresPorCurso(codigoCurso) {
-    return this.makeRequest(`/profesores/curso/${encodeURIComponent(codigoCurso)}`);
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/profesores`);
   }
 
   // ===== CURSOS =====
