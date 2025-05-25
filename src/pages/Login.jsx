@@ -107,43 +107,174 @@ const Login = () => {
      * Maneja el envío del formulario de registro
      */
     const handleSignUpSubmit = async (formData) => {
-        setIsLoading(true);
-        setError('');
+    setIsLoading(true);
+    setError('');
 
-        try {
-            console.log('📝 Intentando registrar usuario...');
-            
-            // Validación básica - ya no necesitamos validar confirmPassword aquí
-            // porque SignUpForm ya lo hace internamente
-            if (!formData.email || !formData.password) {
-                throw new Error('Por favor completa todos los campos requeridos');
-            }
+    try {
+        console.log('📝 Intentando registrar usuario...');
+        
+        // Validación básica
+        if (!formData.email || !formData.password) {
+            throw new Error('Por favor completa todos los campos requeridos');
+        }
 
-            // Validación de formato de email UVG
-            if (!formData.email.includes('@uvg.edu.gt')) {
-                throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
-            }
+        // Validación de formato de email UVG
+        if (!formData.email.includes('@uvg.edu.gt')) {
+            throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
+        }
 
-            console.log('Enviando datos:', formData); 
-            
-             // Llamar a la API para registrar
-            const response = await apiService.createEstudiante(formData);
-            
-            if (response && response.success) {
+        // LOG DETALLADO: Mostrar datos que se van a enviar
+        console.log('📤 Datos a enviar al backend:', {
+            ...formData,
+            password: '[OCULTA]' // No mostrar la contraseña en logs
+        });
+        
+        // Llamar a la API para registrar
+        console.log('🔄 Enviando petición a apiService.createEstudiante...');
+        const response = await apiService.createEstudiante(formData);
+        
+        // LOG DETALLADO: Mostrar respuesta completa del servidor
+        console.log('📥 Respuesta completa del servidor:', response);
+        console.log('📊 Tipo de respuesta:', typeof response);
+        console.log('✅ ¿Tiene propiedad success?', 'success' in response);
+        console.log('📋 Status de success:', response?.success);
+        console.log('💬 Mensaje del servidor:', response?.message);
+        
+        // Verificación más robusta de la respuesta
+        if (response) {
+            if (response.success === true) {
+                console.log('🎉 ¡Registro exitoso confirmado por el servidor!');
+                
+                // Si el servidor devuelve datos del usuario creado
+                if (response.data) {
+                    console.log('👤 Datos del usuario creado:', response.data);
+                }
+                
                 alert('✅ Registro exitoso! Ahora puedes iniciar sesión');
                 setIsSignUpMode(false);
-                // Usar el email del formData directamente
                 setEmail(formData.email);
+                
             } else {
-                throw new Error(response?.message || '❌ Error en el registro');
+                // El servidor respondió pero con error
+                console.error('❌ El servidor reportó un error:', response.message || 'Error desconocido');
+                throw new Error(response.message || 'Error en el registro reportado por el servidor');
             }
-        } catch (error) {
-            console.error('Error completo:', error); // Muestra el error completo
-            setError(error.message || 'Error al registrar. Inténtalo de nuevo.');
-        } finally {
-            setIsLoading(false);
+        } else {
+            // No hay respuesta del servidor
+            console.error('❌ No se recibió respuesta del servidor');
+            throw new Error('No se recibió respuesta del servidor');
         }
-    };
+        
+    } catch (error) {
+        console.error('💥 Error completo capturado:', error);
+        console.error('📋 Tipo de error:', typeof error);
+        console.error('💬 Mensaje de error:', error.message);
+        console.error('📚 Stack trace:', error.stack);
+        
+        // Si el error viene de la respuesta HTTP
+        if (error.response) {
+            console.error('🌐 Error HTTP - Status:', error.response.status);
+            console.error('📄 Error HTTP - Data:', error.response.data);
+            setError(`Error del servidor: ${error.response.data?.message || error.message}`);
+        } else if (error.request) {
+            // Error de red o conectividad
+            console.error('🔌 Error de conectividad:', error.request);
+            setError('Error de conectividad. Verifica tu conexión a internet.');
+        } else {
+            // Error de validación o lógica
+            setError(error.message || 'Error desconocido al registrar');
+        }
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+/**
+ * Función adicional para verificar el estado de la API antes del registro
+ */
+const checkApiBeforeSignup = async () => {
+    try {
+        console.log('🔍 Verificando estado de API antes del registro...');
+        const healthResponse = await apiService.healthCheck();
+        console.log('💚 Estado de API:', healthResponse);
+        return healthResponse?.success || false;
+    } catch (error) {
+        console.warn('⚠️ API health check failed:', error);
+        return false;
+    }
+};
+
+/**
+ * Función para validar que el email no esté ya registrado (opcional)
+ */
+const checkEmailExists = async (email) => {
+    try {
+        // Si tienes un endpoint para verificar emails
+        const response = await apiService.checkEmailExists(email);
+        return response?.exists || false;
+    } catch (error) {
+        console.warn('⚠️ No se pudo verificar el email:', error);
+        return false;
+    }
+};
+
+/**
+ * Versión completa con pre-validaciones
+ */
+const handleSignUpSubmitComplete = async (formData) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+        // 1. Verificar estado de la API
+        const apiHealthy = await checkApiBeforeSignup();
+        if (!apiHealthy) {
+            throw new Error('El servidor no está disponible en este momento');
+        }
+
+        // 2. Verificar si el email ya existe (opcional)
+        // const emailExists = await checkEmailExists(formData.email);
+        // if (emailExists) {
+        //     throw new Error('Este correo electrónico ya está registrado');
+        // }
+
+        // 3. Proceder con el registro
+        console.log('📝 Iniciando proceso de registro...');
+        console.log('📤 Datos finales a enviar:', {
+            ...formData,
+            password: '[OCULTA]'
+        });
+        
+        const response = await apiService.createEstudiante(formData);
+        
+        // 4. Validación exhaustiva de respuesta
+        console.log('📥 Respuesta del servidor:', response);
+        
+        if (!response) {
+            throw new Error('No se recibió respuesta del servidor');
+        }
+        
+        if (response.success !== true) {
+            throw new Error(response.message || 'Error desconocido del servidor');
+        }
+        
+        // 5. Registro exitoso
+        console.log('🎉 ¡Registro completado exitosamente!');
+        if (response.data) {
+            console.log('👤 Usuario creado:', response.data);
+        }
+        
+        alert('✅ ¡Registro exitoso! Ahora puedes iniciar sesión');
+        setIsSignUpMode(false);
+        setEmail(formData.email);
+        
+    } catch (error) {
+        console.error('💥 Error en el registro:', error);
+        setError(error.message || 'Error al registrar usuario');
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     /**
      * Maneja el inicio de sesión de demostración
