@@ -334,6 +334,7 @@ const StudentDetails = () => {
                                 isLoading={saving}
                                 error={error}
                                 initialData={student}
+                                isEditMode={true}
                             />
                         </div>
                     ) : (
