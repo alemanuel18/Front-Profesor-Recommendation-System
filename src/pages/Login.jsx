@@ -372,67 +372,151 @@ const Login = () => {
             </div>
 
             {/* Panel derecho - Banner decorativo */}
-            <div className="relative flex-1 hidden w-0 bg-gradient-to-br from-teal-600 to-teal-800 lg:block">
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                        <h1 className="text-4xl font-bold mb-4">
-                            {isSignUpMode ? 'Únete al Sistema' : 'Sistema de Asignación'}
-                        </h1>
-                        <p className="text-xl mb-8">Universidad del Valle de Guatemala</p>
-                        <div className="max-w-md mx-auto">
-                            <div className="bg-gradient-to-br bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
-                                <h3 className="text-lg font-semibold mb-3">
+            <div className="relative flex-1 hidden w-0 bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 lg:block overflow-hidden">
+                {/* Elementos de fondo animados */}
+                <div className="absolute inset-0">
+                    {/* Círculos flotantes de fondo */}
+                    <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
+                    <div className="absolute top-32 right-16 w-12 h-12 bg-white bg-opacity-5 rounded-full animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
+                    <div className="absolute bottom-20 left-16 w-16 h-16 bg-emerald-400 bg-opacity-20 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
+                    <div className="absolute top-1/2 right-8 w-8 h-8 bg-teal-300 bg-opacity-15 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+                    
+                    {/* Líneas decorativas */}
+                    <div className="absolute top-0 right-0 w-1 h-32 bg-gradient-to-b from-transparent via-white to-transparent opacity-20 animate-pulse"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse" style={{animationDelay: '1s'}}></div>
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="text-center text-white px-8">
+                        {/* Título principal con animación */}
+                        <div className="transform transition-all duration-1000 ease-out">
+                            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-white via-teal-100 to-emerald-200 bg-clip-text text-transparent animate-pulse">
+                                {isSignUpMode ? '¡Únete a nosotros!' : 'El poder de los Grafos'}
+                            </h1>
+                            <p className="text-xl mb-8 text-teal-100 font-light tracking-wide">
+                                
+                            </p>
+                        </div>
+
+                        {/* Tarjeta principal con glassmorphism */}
+                        <div className="max-w-lg mx-auto transform transition-all duration-500 hover:scale-105">
+                            <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 border border-white border-opacity-20 shadow-2xl">
+                                {/* Icono dinámico */}
+                                <div className="flex justify-center mb-6">
+                                    <div className="relative">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
+                                            {isSignUpMode ? (
+                                                <svg className="w-8 h-8 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-8 h-8 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                        {/* Anillo pulsante alrededor del icono */}
+                                        <div className="absolute inset-0 border-4 border-white border-opacity-30 rounded-2xl animate-ping"></div>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-2xl font-bold mb-6 text-teal-600">
                                     {isSignUpMode ? 'Beneficios del Sistema' : 'Características del Sistema'}
                                 </h3>
-                                <ul className="text-sm space-y-2 text-left">
+                                
+                                {/* Lista de características con animaciones escalonadas */}
+                                <div className="space-y-4">
                                     {isSignUpMode ? (
                                         <>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Profesores adaptados a tu estilo
-                                            </li>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Optimización de tu carga académica
-                                            </li>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Mejores resultados académicos
-                                            </li>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.1s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Profesores adaptados a tu estilo</span>
+                                            </div>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.2s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Optimización de tu carga académica</span>
+                                            </div>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.3s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Mejores resultados académicos</span>
+                                            </div>
                                         </>
                                     ) : (
                                         <>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Recomendaciones personalizadas
-                                            </li>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Análisis de compatibilidad
-                                            </li>
-                                            <li className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                Gestión administrativa
-                                            </li>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.1s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Recomendaciones personalizadas</span>
+                                            </div>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.2s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Análisis de compatibilidad</span>
+                                            </div>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.3s'}}>
+                                                <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
+                                                    <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-teal-600 font-medium">Gestión administrativa</span>
+                                            </div>
                                         </>
                                     )}
-                                </ul>
+                                </div>
+
+                                {/* Estadísticas o métricas animadas */}
+                                <div className="mt-8 pt-6 border-t border-white border-opacity-20">
+                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                        <div className="transform transition-all duration-300 hover:scale-110">
+                                            <div className="text-2xl font-bold text-emerald-300">20+</div>
+                                            <div className="text-xs text-teal-200 uppercase tracking-wide">Estudiantes</div>
+                                        </div>
+                                        <div className="transform transition-all duration-300 hover:scale-110">
+                                            <div className="text-2xl font-bold text-teal-300">10+</div>
+                                            <div className="text-xs text-teal-200 uppercase tracking-wide">Profesores</div>
+                                        </div>
+                                        <div className="transform transition-all duration-300 hover:scale-110">
+                                            <div className="text-2xl font-bold text-emerald-300">95%</div>
+                                            <div className="text-xs text-teal-200 uppercase tracking-wide">Satisfacción</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Texto adicional con efecto de escritura */}
+                        <div className="mt-8">
+                            <p className="text-teal-200 text-sm font-light italic animate-pulse">
+                                "Conectando estudiantes con los mejores profesores"
+                            </p>
                         </div>
                     </div>
                 </div>
+
+                {/* Overlay con patrón sutil */}
+                <div className="absolute inset-0 opacity-10" style={{
+                    backgroundImage: 'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
+                    backgroundSize: '50px 50px'
+                }}></div>
             </div>
         </div>
     );
