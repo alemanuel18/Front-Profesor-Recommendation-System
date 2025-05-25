@@ -9,9 +9,10 @@
  * Formulario reutilizable para el registro de nuevos usuarios del sistema.
  * Incluye validaciones y manejo de estados para todos los campos requeridos.
  * Actualizado para incluir campos de correo y contraseña.
+ * Soporta datos iniciales para modo de edición.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // ===== COMPONENTE DE CAMPO CON ERROR (MOVIDO FUERA DEL RENDER) =====
 const FormField = ({ 
@@ -54,7 +55,13 @@ const FormField = ({
     </div>
 );
 
-const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
+const SignUpForm = ({ 
+    onSubmit, 
+    isLoading = false, 
+    error = '', 
+    initialData = null, // Nuevo prop para datos iniciales
+    isEditMode = false // Nuevo prop para indicar si es modo edición
+}) => {
     // ===== ESTADOS DEL FORMULARIO =====
     const [formData, setFormData] = useState({
         nombreCompleto: '',
@@ -73,6 +80,33 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
     });
 
     const [validationErrors, setValidationErrors] = useState({});
+
+    // ===== EFECTO PARA CARGAR DATOS INICIALES =====
+    useEffect(() => {
+        if (initialData && isEditMode) {
+            console.log('📝 Cargando datos iniciales para edición:', initialData);
+            
+            // Mapear los datos del estudiante al formato del formulario
+            const mappedData = {
+                nombreCompleto: initialData.nombreCompleto || initialData.nombre || '',
+                carnet: initialData.carnet || '',
+                email: initialData.email || '',
+                password: '', // No prellenar contraseñas por seguridad
+                confirmPassword: '',
+                carrera: initialData.carrera || '',
+                pensum: initialData.pensum?.toString() || '',
+                promedioAnterior: initialData.promedioAnterior?.toString() || initialData.promedio?.toString() || '',
+                grado: initialData.grado || '',
+                cargaMaxima: initialData.cargaMaxima?.toString() || initialData.carga_maxima?.toString() || '',
+                estiloAprendizaje: initialData.estiloAprendizaje || initialData.estilo_aprendizaje || '',
+                estiloClase: initialData.estiloClase || initialData.estilo_clase || '',
+                cursosZonaMinima: initialData.cursosZonaMinima?.toString() || initialData.cursos_zona_minima?.toString() || ''
+            };
+            
+            setFormData(mappedData);
+            console.log('✅ Datos mapeados para el formulario:', mappedData);
+        }
+    }, [initialData, isEditMode]);
 
     // ===== OPCIONES PARA SELECTS =====
     const estilosAprendizaje = [
@@ -136,20 +170,22 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             errors.email = 'Debe usar un correo institucional (@uvg.edu.gt)';
         }
 
-        // Validar contraseña
-        if (!formData.password) {
-            errors.password = 'La contraseña es requerida';
-        } else if (formData.password.length < 6) {
-            errors.password = 'La contraseña debe tener al menos 6 caracteres';
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-            errors.password = 'La contraseña debe contener al menos una mayúscula, una minúscula y un número';
-        }
+        // Validar contraseña (solo en modo registro o si se está cambiando)
+        if (!isEditMode || formData.password) {
+            if (!formData.password) {
+                errors.password = 'La contraseña es requerida';
+            } else if (formData.password.length < 6) {
+                errors.password = 'La contraseña debe tener al menos 6 caracteres';
+            } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+                errors.password = 'La contraseña debe contener al menos una mayúscula, una minúscula y un número';
+            }
 
-        // Validar confirmación de contraseña
-        if (!formData.confirmPassword) {
-            errors.confirmPassword = 'Confirma tu contraseña';
-        } else if (formData.password !== formData.confirmPassword) {
-            errors.confirmPassword = 'Las contraseñas no coinciden';
+            // Validar confirmación de contraseña
+            if (!formData.confirmPassword) {
+                errors.confirmPassword = 'Confirma tu contraseña';
+            } else if (formData.password !== formData.confirmPassword) {
+                errors.confirmPassword = 'Las contraseñas no coinciden';
+            }
         }
 
         // Validar carrera
@@ -242,7 +278,6 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             nombre: formData.nombreCompleto, // Mapear nombreCompleto -> nombre
             carnet: formData.carnet,
             email: formData.email,
-            password: formData.password,
             carrera: formData.carrera,
             pensum: parseInt(formData.pensum),
             promedio: parseFloat(formData.promedioAnterior), // Mapear promedioAnterior -> promedio
@@ -252,6 +287,11 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
             estilo_aprendizaje: formData.estiloAprendizaje, // Mapear estiloAprendizaje -> estilo_aprendizaje
             estilo_clase: formData.estiloClase // Mapear estiloClase -> estilo_clase
         };
+
+        // Solo incluir contraseña si se está registrando o si se cambió en edición
+        if (!isEditMode || formData.password) {
+            dataToSend.password = formData.password;
+        }
 
         setValidationErrors({});
         onSubmit(dataToSend);
@@ -311,27 +351,87 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                     handleInputChange={handleInputChange}
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <FormField
-                        label="Contraseña"
-                        name="password"
-                        type="password"
-                        placeholder="••••••••"
-                        formData={formData}
-                        validationErrors={validationErrors}
-                        handleInputChange={handleInputChange}
-                    />
+                {/* Solo mostrar campos de contraseña en registro o si se quiere cambiar en edición */}
+                {!isEditMode && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField
+                            label="Contraseña"
+                            name="password"
+                            type="password"
+                            placeholder="••••••••"
+                            formData={formData}
+                            validationErrors={validationErrors}
+                            handleInputChange={handleInputChange}
+                        />
 
-                    <FormField
-                        label="Confirmar Contraseña"
-                        name="confirmPassword"
-                        type="password"
-                        placeholder="••••••••"
-                        formData={formData}
-                        validationErrors={validationErrors}
-                        handleInputChange={handleInputChange}
-                    />
-                </div>
+                        <FormField
+                            label="Confirmar Contraseña"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="••••••••"
+                            formData={formData}
+                            validationErrors={validationErrors}
+                            handleInputChange={handleInputChange}
+                        />
+                    </div>
+                )}
+
+                {/* En modo edición, mostrar opción para cambiar contraseña */}
+                {isEditMode && (
+                    <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="changePassword"
+                                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                onChange={(e) => {
+                                    if (!e.target.checked) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            password: '',
+                                            confirmPassword: ''
+                                        }));
+                                        // Limpiar errores de contraseña
+                                        setValidationErrors(prev => {
+                                            const newErrors = { ...prev };
+                                            delete newErrors.password;
+                                            delete newErrors.confirmPassword;
+                                            return newErrors;
+                                        });
+                                    }
+                                }}
+                            />
+                            <label htmlFor="changePassword" className="text-sm text-gray-700">
+                                Cambiar contraseña
+                            </label>
+                        </div>
+
+                        {/* Mostrar campos de contraseña solo si el checkbox está marcado */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <FormField
+                                label="Nueva Contraseña"
+                                name="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required={false}
+                                formData={formData}
+                                validationErrors={validationErrors}
+                                handleInputChange={handleInputChange}
+                            />
+
+                            <FormField
+                                label="Confirmar Nueva Contraseña"
+                                name="confirmPassword"
+                                type="password"
+                                placeholder="••••••••"
+                                required={false}
+                                formData={formData}
+                                validationErrors={validationErrors}
+                                handleInputChange={handleInputChange}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Información Académica */}
@@ -476,7 +576,10 @@ const SignUpForm = ({ onSubmit, isLoading = false, error = '' }) => {
                         isLoading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
-                    {isLoading ? 'Registrando...' : 'Crear Cuenta'}
+                    {isLoading 
+                        ? (isEditMode ? 'Actualizando...' : 'Registrando...') 
+                        : (isEditMode ? 'Actualizar Perfil' : 'Crear Cuenta')
+                    }
                 </button>
             </div>
         </form>
