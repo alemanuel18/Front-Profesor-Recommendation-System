@@ -132,6 +132,93 @@ class ApiService {
     return this.makeRequest(`/profesores/curso/${encodeURIComponent(codigoCurso)}`);
   }
 
+  // ===== CURSOS =====
+
+  // Obtener todos los cursos
+  async getCursos(departamento = null) {
+    const params = departamento ? `?departamento=${encodeURIComponent(departamento)}` : '';
+    return this.makeRequest(`/cursos${params}`);
+  }
+
+  // Obtener un curso por código
+  async getCurso(codigo) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigo)}`);
+  }
+
+  // Crear un nuevo curso
+  async createCurso(cursoData) {
+    return this.makeRequest('/cursos', {
+      method: 'POST',
+      body: JSON.stringify(cursoData),
+    });
+  }
+
+  // Actualizar un curso
+  async updateCurso(codigo, cursoData) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigo)}`, {
+      method: 'PUT',
+      body: JSON.stringify(cursoData),
+    });
+  }
+
+  // Eliminar un curso
+  async deleteCurso(codigo) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigo)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Obtener profesores de un curso específico
+  async getProfesoresPorCurso(codigoCurso) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/profesores`);
+  }
+
+  // Obtener estudiantes de un curso específico
+  async getEstudiantesPorCurso(codigoCurso) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes`);
+  }
+
+  // Inscribir estudiante a un curso
+  async inscribirEstudianteCurso(codigoCurso, carnetEstudiante) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes/${encodeURIComponent(carnetEstudiante)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Desinscribir estudiante de un curso
+  async desinscribirEstudianteCurso(codigoCurso, carnetEstudiante) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes/${encodeURIComponent(carnetEstudiante)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Actualizar nota de estudiante en un curso
+  async actualizarNotaEstudiante(codigoCurso, carnetEstudiante, notaData) {
+    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes/${encodeURIComponent(carnetEstudiante)}/nota`, {
+      method: 'PUT',
+      body: JSON.stringify(notaData),
+    });
+  }
+
+  // Asignar curso a profesor
+  async asignarCursoProfesor(nombreProfesor, codigoCurso) {
+    return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos/${encodeURIComponent(codigoCurso)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Desasignar curso de profesor
+  async desasignarCursoProfesor(nombreProfesor, codigoCurso) {
+    return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos/${encodeURIComponent(codigoCurso)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Obtener cursos de un profesor específico
+  async getCursosProfesor(nombreProfesor) {
+    return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos`);
+  }
+
   // ===== RECOMENDACIONES =====
   
   // Obtener recomendaciones para un estudiante
