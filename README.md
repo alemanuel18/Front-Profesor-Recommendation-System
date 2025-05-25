@@ -2,7 +2,7 @@
 
 ## Instalar node.js
 
-Es necesario de instalar node.js para poder ver/modificar/correr el proyecto.
+Es necesario instalar node.js para poder ver/modificar/correr el proyecto.
 
 1. Ir a la pagina de node.js: https://nodejs.org/en 
 2. Descargar node.js
@@ -25,12 +25,12 @@ npm install
 npm run dev
 ```
 
-## Iniciar Secion en Login (Estudiante)
+## Iniciar Sesión en Login (Estudiante)
 
 - Email: estudiante@uvg.edu.gt
 - Contraseña: password123
 
-## Iniciar Secion en Login (Admin)
+## Iniciar Sesión en Login (Admin)
 
 - Email: admin@uvg.edu.gt
 - Contraseña: admin123
