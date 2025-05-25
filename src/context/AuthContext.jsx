@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
       } else if (credentials.email === "admin@uvg.edu.gt" && credentials.password === "admin123") {
         // Datos de usuario administrador
         const userData = {
-          id: "2",
+          carnet: "77777",
           name: "ADMINISTRADOR UVG",
           role: "admin",
           email: credentials.email
