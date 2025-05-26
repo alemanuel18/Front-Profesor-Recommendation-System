@@ -38,6 +38,13 @@ const Seleccion_Profesores = () => {
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [processingSelection, setProcessingSelection] = useState(false);
 
+    const [enrollmentCheck, setEnrollmentCheck] = useState({
+        loading: false,
+        isEnrolled: false,
+        currentProfessor: null,
+        error: null
+        });
+
     // ===== EFECTOS =====
     
     // Obtener información del curso y recomendaciones
@@ -51,6 +58,37 @@ const Seleccion_Profesores = () => {
     useEffect(() => {
         applyFilters();
     }, [recommendations, allProfessors, searchTerm, selectedFilter]);
+
+    // Verificar inscripción del estudiante al curso
+    useEffect(() => {
+    if (!studentName || !courseInfo?.codigo) return;
+
+    const checkEnrollment = async () => {
+        setEnrollmentCheck(prev => ({...prev, loading: true}));
+        try {
+        const inscripcionInfo = await ApiService.getInformacionInscripcion(
+            currentUser.carnet, 
+            courseInfo.codigo
+        );
+        setEnrollmentCheck({
+            loading: false,
+            isEnrolled: inscripcionInfo.esta_inscrito,
+            currentProfessor: inscripcionInfo.profesor_actual,
+            error: null
+        });
+        } catch (error) {
+        setEnrollmentCheck({
+            loading: false,
+            isEnrolled: false,
+            currentProfessor: null,
+            error: error.message
+        });
+        }
+    };
+
+    checkEnrollment();
+    }, [studentName, courseInfo?.codigo, currentUser.carnet]);
+
 
     // ===== FUNCIONES PRINCIPALES =====
 
@@ -265,53 +303,60 @@ const Seleccion_Profesores = () => {
     };
 
     /**
-     * Maneja la selección de un profesor
+     * Maneja la selección de un profesor para inscribirse en su curso
      */
     const handleProfessorSelect = async (professorId, professorName) => {
-        if (processingSelection) return;
+    if (processingSelection || enrollmentCheck.loading || enrollmentCheck.isEnrolled) return;
+    
+    try {
+        setProcessingSelection(true);
         
-        try {
-            setProcessingSelection(true);
-            console.log(`👨‍🏫 Procesando selección del profesor: ${professorName}`);
-            
-            const confirmed = window.confirm(
-                `¿Deseas inscribirte con el profesor ${professorName} para el curso ${courseInfo?.nombre}?`
-            );
-            
-            if (confirmed) {
-                try {
-                    // Inscribir estudiante al curso
-                    await ApiService.inscribirEstudianteCurso(courseInfo.codigo, studentName);
-                    
-                    // Registrar la aprobación/selección del profesor
-                    if (studentName && professorName && courseInfo?.codigo) {
-                        await ApiService.registrarAprobacion(studentName, professorName, courseInfo.codigo);
-                    }
-                    
-                    // Mostrar confirmación
-                    alert(`¡Inscrito exitosamente!\n\nProfesor: ${professorName}\nCurso: ${courseInfo?.nombre}\nCódigo: ${courseInfo?.codigo}`);
-                    
-                    // Opcional: Redirigir a una página de confirmación o dashboard
-                    // navigate('/dashboard');
-                    
-                } catch (registrationError) {
-                    console.error('Error en el registro:', registrationError);
-                    
-                    // Manejar diferentes tipos de errores
-                    if (registrationError.message.includes('ya está inscrito')) {
-                        alert('Ya estás inscrito en este curso con este profesor.');
-                    } else {
-                        alert(`Error al procesar el registro: ${registrationError.message}`);
-                    }
-                }
-            }
-            
-        } catch (error) {
-            console.error('Error al seleccionar profesor:', error);
-            alert(`Error al procesar la selección: ${error.message}`);
-        } finally {
-            setProcessingSelection(false);
+        // Mostrar diálogo de confirmación primero
+        const confirmed = window.confirm(
+        `¿Deseas inscribirte con el profesor ${professorName} para el curso ${courseInfo?.nombre}?\n\nUna vez inscrito, no podrás cambiarte de profesor.`
+        );
+        
+        if (!confirmed) {
+        setProcessingSelection(false);
+        return;
         }
+
+        // Verificar disponibilidad del profesor
+        const profesorResponse = await ApiService.getProfesor(professorName);
+        if (!profesorResponse?.data?.disponibilidad || profesorResponse.data.disponibilidad <= 0) {
+        throw new Error('El profesor no tiene disponibilidad actualmente');
+        }
+
+        // Inscribir estudiante
+        const inscripcionResponse = await ApiService.asignarEstudianteCurso(
+        currentUser.carnet,
+        {
+            codigo_curso: courseInfo.codigo,
+            nombre_profesor: professorName
+        }
+        );
+
+        if (!inscripcionResponse.success) {
+        throw new Error(inscripcionResponse.message || 'Error al inscribirse al curso');
+        }
+
+        // Actualizar UI inmediatamente
+        setEnrollmentCheck({
+        loading: false,
+        isEnrolled: true,
+        currentProfessor: professorName,
+        error: null
+        });
+
+        alert(`¡Inscripción exitosa!\n\nCurso: ${courseInfo.nombre}\nProfesor: ${professorName}`);
+        
+    } catch (error) {
+        console.error('Error en el proceso de inscripción:', error);
+        let errorMessage = error.response?.data?.message || error.message;
+        alert(`Error al inscribirse: ${errorMessage}`);
+    } finally {
+        setProcessingSelection(false);
+    }
     };
 
     /**
@@ -577,6 +622,32 @@ const Seleccion_Profesores = () => {
                             )}
                         </div>
                     )}
+
+                    {/* Verificación de inscripción */}
+                    {enrollmentCheck.loading ? (
+                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
+                        <div className="flex items-center">
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-3"></div>
+                        <p className="text-sm text-gray-600">Verificando estado de inscripción...</p>
+                        </div>
+                    </div>
+                    ) : enrollmentCheck.isEnrolled ? (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                        <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm text-yellow-700">
+                            <strong>Ya estás inscrito en este curso</strong> con el profesor {enrollmentCheck.currentProfessor}. 
+                            No puedes cambiarte de profesor una vez inscrito.
+                            </p>
+                        </div>
+                        </div>
+                    </div>
+                    ) : null}
 
                     {/* Grid de recomendaciones de profesores */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

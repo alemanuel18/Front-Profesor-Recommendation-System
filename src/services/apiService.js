@@ -114,6 +114,81 @@ class ApiService {
     });
   }
 
+  // ===== GESTIÓN DE CURSOS PARA ESTUDIANTES =====
+
+  // Asignar estudiante a un curso con profesor específico
+  async asignarEstudianteCurso(carnet, datosCurso) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}/asignar-curso`, {
+      method: 'POST',
+      body: JSON.stringify(datosCurso),
+    });
+  }
+
+  // Desasignar estudiante de un curso
+  async desasignarEstudianteCurso(carnet, codigoCurso) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}/desasignar-curso/${encodeURIComponent(codigoCurso)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Obtener todos los cursos de un estudiante
+  async getCursosEstudiante(carnet) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}/cursos`);
+  }
+
+  // NUEVOS MÉTODOS PARA LA RESTRICCIÓN DE UN PROFESOR POR CURSO
+
+  // Verificar si un estudiante está inscrito en un curso específico
+  async verificarInscripcionCurso(carnet, codigoCurso) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}/curso/${encodeURIComponent(codigoCurso)}/inscripcion`);
+  }
+
+  // Obtener profesores disponibles para un curso específico
+  async getProfesoresDisponiblesCurso(carnet, codigoCurso) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}/curso/${encodeURIComponent(codigoCurso)}/profesores-disponibles`);
+  }
+
+  // Método helper para verificar si un estudiante puede inscribirse en un curso
+  async puedeInscribirseEnCurso(carnet, codigoCurso) {
+    try {
+      const inscripcion = await this.verificarInscripcionCurso(carnet, codigoCurso);
+      return {
+        puede_inscribirse: !inscripcion.inscrito,
+        profesor_actual: inscripcion.inscrito ? inscripcion.data.profesor : null,
+        mensaje: inscripcion.inscrito 
+          ? `Ya inscrito con el profesor ${inscripcion.data.profesor}`
+          : 'Puede inscribirse en este curso'
+      };
+    } catch (error) {
+      console.error('Error verificando inscripción:', error);
+      throw error;
+    }
+  }
+
+  // Método helper para obtener información completa de inscripción
+  async getInformacionInscripcion(carnet, codigoCurso) {
+    try {
+      const [inscripcion, profesoresDisponibles] = await Promise.all([
+        this.verificarInscripcionCurso(carnet, codigoCurso),
+        this.getProfesoresDisponiblesCurso(carnet, codigoCurso)
+      ]);
+
+      return {
+        esta_inscrito: inscripcion.inscrito,
+        datos_inscripcion: inscripcion.data,
+        profesores_disponibles: profesoresDisponibles.data.profesores,
+        profesor_actual: inscripcion.inscrito ? inscripcion.data.profesor : null,
+        puede_cambiar_profesor: false, // Siempre false según la nueva lógica
+        mensaje: inscripcion.inscrito 
+          ? `Inscrito con ${inscripcion.data.profesor}. No se puede cambiar de profesor.`
+          : 'No inscrito. Puede elegir cualquier profesor disponible.'
+      };
+    } catch (error) {
+      console.error('Error obteniendo información de inscripción:', error);
+      throw error;
+    }
+  }
+
   // ===== PROFESORES =====
   
   // Obtener todos los profesores
@@ -195,14 +270,14 @@ class ApiService {
     return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes`);
   }
 
-  // Inscribir estudiante a un curso
+  // Inscribir estudiante a un curso (método original mantenido para compatibilidad)
   async inscribirEstudianteCurso(codigoCurso, carnetEstudiante) {
     return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes/${encodeURIComponent(carnetEstudiante)}`, {
       method: 'POST',
     });
   }
 
-  // Desinscribir estudiante de un curso
+  // Desinscribir estudiante de un curso (método original mantenido para compatibilidad)
   async desinscribirEstudianteCurso(codigoCurso, carnetEstudiante) {
     return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes/${encodeURIComponent(carnetEstudiante)}`, {
       method: 'DELETE',
