@@ -21,7 +21,7 @@ import { useProfessor } from '../../context/ProfessorContext';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 
-const AdminProfessors = () => {
+const AdminCourses = () => {
   // ===== HOOKS Y CONTEXTO =====
   const navigate = useNavigate(); // Hook para navegación
   const { professors, loading } = useProfessor(); // Datos de profesores
@@ -134,4 +134,4 @@ const AdminProfessors = () => {
   );
 };
 
-export default AdminProfessors;
+export default AdminCourses;

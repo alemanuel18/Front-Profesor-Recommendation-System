@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import ProfessorDetails from './pages/ProfessorDetails';
 import StudentDetails from './pages/StudentDetails'; // Agregar import
 import AdminProfessors from './pages/Admin/AdminProfessors';
+import AdminCourses from './pages/Admin/AdminCourses';
 import { StudentProvider } from './context/StudentContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProfessorProvider } from './context/ProfessorContext';
@@ -56,6 +57,13 @@ function App() {
                   <AdminProfessors />
                 </AdminProtectedRoute>
               } />
+
+              <Route path="/admin/courses" element={
+                <AdminProtectedRoute>
+                  <AdminCourses />
+                </AdminProtectedRoute>
+              } />
+
               <Route path="/admin/professors/:professorId" element={
                 <AdminProtectedRoute>
                   <ProfessorDetails />

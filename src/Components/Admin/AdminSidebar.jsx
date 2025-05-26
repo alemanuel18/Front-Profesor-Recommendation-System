@@ -60,6 +60,14 @@ const AdminSidebar = () => {
             <span>Profesores</span>
           </Link>
 
+          {/* Gestión de Cursos */}
+          <Link
+            to="/admin/courses"
+            className={`flex items-center px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors ${isActive('/admin/courses')}`}
+          >
+            <span>Cursos</span>
+          </Link>
+
         </nav>
       </div>
     </aside>
