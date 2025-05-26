@@ -66,15 +66,27 @@ const AdminProfessors = () => {
   /**
    * Maneja la navegación a los detalles de un profesor
    */
-  const handleProfessorSelect = (professorName) => {
-    navigate(`/admin/professors/${professorName}`);
+  const handleProfessorSelect = (professor) => {
+    const nombreProfesor = typeof professor === 'string' ? professor : (professor.nombre || professor.name);
+    console.log('🔍 Navegando a detalles del profesor:', nombreProfesor);
+    navigate(`/admin/professors/${nombreProfesor}`);
   };
 
   /**
    * Abre el modal de confirmación para eliminar profesor
    */
   const handleDeleteClick = (professor) => {
-    setProfessorToDelete(professor);
+    console.log('🗑️ Profesor seleccionado para eliminar:', professor);
+    
+    // Asegurar compatibilidad con ambos formatos de datos
+    const professorData = {
+      ...professor,
+      nombre: professor.nombre || professor.name,
+      name: professor.name || professor.nombre
+    };
+    
+    console.log('📝 Datos del profesor normalizados:', professorData);
+    setProfessorToDelete(professorData);
     setShowDeleteModal(true);
   };
 
@@ -84,9 +96,21 @@ const AdminProfessors = () => {
   const handleDeleteProfessor = async () => {
     if (!professorToDelete) return;
 
+    // Obtener el nombre del profesor de manera segura
+    const nombreProfesor = professorToDelete.nombre || professorToDelete.name;
+    
+    console.log('🔍 Intentando eliminar profesor:', nombreProfesor);
+    
+    if (!nombreProfesor) {
+      console.error('❌ No se pudo obtener el nombre del profesor');
+      alert('Error: No se pudo identificar el profesor a eliminar.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await apiService.deleteProfesor(professorToDelete.nombre);
+      console.log('🌐 Enviando petición de eliminación para:', nombreProfesor);
+      const response = await apiService.deleteProfesor(nombreProfesor);
       
       if (response && response.success) {
         console.log('✅ Profesor eliminado exitosamente');
@@ -98,7 +122,7 @@ const AdminProfessors = () => {
       }
     } catch (error) {
       console.error('❌ Error eliminando profesor:', error);
-      alert('Error al eliminar el profesor. Inténtalo de nuevo.');
+      alert(`Error al eliminar el profesor: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
