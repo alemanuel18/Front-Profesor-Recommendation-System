@@ -108,7 +108,6 @@ const Seleccion_Profesores = () => {
                 courseData = {
                     codigo: location.state.courseCode,
                     nombre: location.state.courseName,
-                    departamento: location.state.department || 'No especificado'
                 };
             } else {
                 // Obtener curso desde la API usando el ID/código
@@ -187,7 +186,6 @@ const Seleccion_Profesores = () => {
                 const professorsAsRecommendations = professors.map((prof, index) => ({
                     id: index,
                     professorName: prof.nombre,
-                    department: courseInfo?.departamento || 'No especificado',
                     rating: parseFloat(prof.evaluacion_docente) || 4.0,
                     experience: parseInt(prof.años_experiencia) || 5,
                     approvalRate: parseFloat(prof.porcentaje_aprobados) || 75,
@@ -257,7 +255,6 @@ const Seleccion_Profesores = () => {
         return fallbackCourses[courseId] || { 
             codigo: courseId, 
             nombre: "Curso", 
-            departamento: "No especificado" 
         };
     };
 
@@ -740,25 +737,6 @@ const Seleccion_Profesores = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        
-                                        {/* Razones de recomendación */}
-                                        {recommendation.reasons && recommendation.reasons.length > 0 && (
-                                            <div className="mt-4">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                                                    ¿Por qué es recomendado?
-                                                </h4>
-                                                <ul className="text-xs text-gray-600 space-y-1">
-                                                    {recommendation.reasons.slice(0, 3).map((reason, idx) => (
-                                                        <li key={idx} className="flex items-start">
-                                                            <svg className="w-3 h-3 text-green-500 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                            </svg>
-                                                            {reason}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
                                     </div>
                                     
                                     {/* Botón de selección */}

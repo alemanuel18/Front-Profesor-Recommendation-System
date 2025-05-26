@@ -305,14 +305,14 @@ const Home = () => {
                                         </div>
                                     )}
                                 </div>
-                                {studentInfo.cursosAprobados?.length > 0 && (
+                                {/* {studentInfo.cursosAprobados?.length > 0 && (
                                     <div className="mt-4 pt-4 border-t border-gray-200">
                                         <span className="text-sm text-gray-600">Cursos Aprobados:</span>
                                         <p className="font-medium text-gray-900">
                                             {studentInfo.cursosAprobados.length} cursos completados
                                         </p>
                                     </div>
-                                )}
+                                )} */}
                             </div>
                         </div>
                     )}

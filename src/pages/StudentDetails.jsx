@@ -78,7 +78,7 @@ const StudentDetails = () => {
                             // Información académica 
                             carrera: apiData.carrera || '',
                             pensum: apiData.pensum || '',
-                            promedio: apiData.promedio || apiData.promedio || 0,
+                            promedio: apiData.promedio || apiData.promedioAnterior || 0,
                             grado: apiData.grado || '',
                             carga_maxima: apiData.carga_maxima || apiData.cargaMaxima || 0,
                             cursos_zona_minima: apiData.cursos_zona_minima || apiData.cursosZonaMinima || 0,
@@ -155,18 +155,66 @@ const StudentDetails = () => {
 
         try {
             console.log('💾 Actualizando datos del estudiante...');
+            console.log('📝 Datos del formulario recibidos:', formData);
             
             if (student?.carnet) {
-                const response = await apiService.updateEstudiante(student.carnet, formData);
+                // Transformar los datos al formato que espera la API
+                const apiData = {
+                    nombre: formData.nombre, // Ya viene mapeado del SignUpForm
+                    carnet: formData.carnet,
+                    email: formData.email,
+                    carrera: formData.carrera,
+                    pensum: formData.pensum,
+                    promedio: formData.promedio, // Ya viene mapeado del SignUpForm
+                    grado: formData.grado,
+                    carga_maxima: formData.carga_maxima, // Ya viene mapeado del SignUpForm
+                    cursos_zona_minima: formData.cursos_zona_minima, // Ya viene mapeado del SignUpForm
+                    estilo_aprendizaje: formData.estilo_aprendizaje, // Ya viene mapeado del SignUpForm
+                    estilo_clase: formData.estilo_clase // Ya viene mapeado del SignUpForm
+                };
+
+                // Solo incluir password si se está cambiando
+                if (formData.password) {
+                    apiData.password = formData.password;
+                }
+
+                console.log('📤 Datos a enviar a la API:', apiData);
+
+                const response = await apiService.updateEstudiante(student.carnet, apiData);
+                console.log('📥 Respuesta de actualización:', response);
                 
                 if (response && response.success) {
-                    setStudent({ ...student, ...formData });
+                    // Actualizar el estado local con los nuevos datos
+                    // Usar la misma estructura que usamos al cargar los datos
+                    const updatedStudent = {
+                        // Mantener campos que no cambian
+                        carnet: student.carnet,
+                        fecha_registro: student.fecha_registro,
+                        
+                        // Actualizar con los nuevos datos
+                        nombre: apiData.nombre,
+                        email: apiData.email,
+                        carrera: apiData.carrera,
+                        pensum: apiData.pensum,
+                        promedio: apiData.promedio,
+                        grado: apiData.grado,
+                        carga_maxima: apiData.carga_maxima,
+                        cursos_zona_minima: apiData.cursos_zona_minima,
+                        estilo_aprendizaje: apiData.estilo_aprendizaje,
+                        estilo_clase: apiData.estilo_clase
+                    };
+                    
+                    console.log('✅ Actualizando estado local con:', updatedStudent);
+                    setStudent(updatedStudent);
+                    
                     setIsEditing(false);
                     console.log('✅ Estudiante actualizado exitosamente');
-                    // Recargar datos para mostrar los cambios
-                    await fetchStudentData();
+                    
+                    // Mostrar mensaje de éxito
+                    setError(null);
+                    
                 } else {
-                    throw new Error('No se pudo actualizar el estudiante');
+                    throw new Error(response?.message || 'No se pudo actualizar el estudiante');
                 }
             } else {
                 throw new Error('No se encontró el carnet del estudiante');
@@ -245,8 +293,8 @@ const StudentDetails = () => {
      */
     const formatearEstiloClase = (estilo) => {
         const estilos = {
-            'con_tecnologia': 'Con Tecnología',
-            'sin_tecnologia': 'Sin Tecnología',
+            'con_tecnologia': 'Uso de herramientas tecnológicas',
+            'sin_tecnologia': 'Sin uso de herramientas tecnológicas',
             'mixto': 'Mixto'
         };
         return estilos[estilo] || 'No especificado';
