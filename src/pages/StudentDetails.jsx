@@ -233,9 +233,8 @@ const StudentDetails = () => {
      */
     const formatearEstiloAprendizaje = (estilo) => {
         const estilos = {
-            'visual': 'Visual',
-            'auditivo': 'Auditivo',
-            'kinestesico': 'Kinestésico',
+            'practico': 'Práctico',
+            'teorico': 'Teórico',
             'mixto': 'Mixto'
         };
         return estilos[estilo] || 'No especificado';
