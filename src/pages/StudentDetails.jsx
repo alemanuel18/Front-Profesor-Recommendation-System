@@ -20,7 +20,7 @@ import apiService from '../services/apiService';
 
 const StudentDetails = () => {
     // ===== HOOKS Y ESTADOS =====
-    const { currentUser } = useAuth(); // Corregido: usar currentUser en lugar de user
+    const { currentUser } = useAuth();
     const navigate = useNavigate();
     
     // Estados locales
@@ -48,7 +48,7 @@ const StudentDetails = () => {
     // ===== FUNCIONES =====
 
     /**
-     * Obtiene los datos del estudiante desde la API o localStorage
+     * Obtiene los datos del estudiante desde la API
      */
     const fetchStudentData = async () => {
         setLoading(true);
@@ -59,130 +59,91 @@ const StudentDetails = () => {
             console.log('👤 Usuario actual:', currentUser);
             
             // Intentar obtener datos desde la API
-            if (currentUser?.carnet) {
-                const response = await apiService.getEstudiante(currentUser.carnet);
+            if (currentUser?.carnet || currentUser?.id) {
+                const carnetEstudiante = currentUser.carnet || currentUser.id;
                 
-                if (response && response.success && response.data) {
-                    setStudent(response.data);
-                    console.log('✅ Datos del estudiante obtenidos desde API');
-                    return;
+                try {
+                    const response = await apiService.getEstudiante(carnetEstudiante);
+                    console.log('📥 Respuesta de la API:', response);
+                    
+                    if (response && response.success && response.data) {
+                        // Mapear los campos de la respuesta de la API correctamente
+                        const apiData = response.data;
+                        const studentData = {
+                            // Información básica
+                            nombre: apiData.nombre || apiData.nombreCompleto || apiData.name || '',
+                            carnet: apiData.carnet || apiData.id || '',
+                            email: apiData.email || `${apiData.carnet || apiData.id}@uvg.edu.gt`,
+                            
+                            // Información académica 
+                            carrera: apiData.carrera || '',
+                            pensum: apiData.pensum || '',
+                            promedio: apiData.promedio || apiData.promedio || 0,
+                            grado: apiData.grado || '',
+                            carga_maxima: apiData.carga_maxima || apiData.cargaMaxima || 0,
+                            cursos_zona_minima: apiData.cursos_zona_minima || apiData.cursosZonaMinima || 0,
+                            
+                            // Preferencias de aprendizaje
+                            estilo_aprendizaje: apiData.estilo_aprendizaje || apiData.estiloAprendizaje || '',
+                            estilo_clase: apiData.estilo_clase || apiData.estiloClase || '',
+                            
+                            // Fechas
+                            fecha_registro: apiData.fecha_registro || apiData.fechaRegistro || new Date().toISOString()
+                        };
+                        
+                        setStudent(studentData);
+                        console.log('✅ Datos del estudiante obtenidos desde API:', studentData);
+                        return;
+                    }
+                } catch (apiError) {
+                    console.warn('⚠️ Error obteniendo desde API:', apiError);
+                    setError(`Error al obtener datos: ${apiError.message}`);
                 }
             }
             
-            // Fallback: usar datos del usuario actual
-            if (currentUser) {
-                setStudent({
-                    nombreCompleto: currentUser.nombreCompleto || currentUser.name || '',
-                    carnet: currentUser.carnet || currentUser.id || '',
-                    carrera: currentUser.carrera || 'Ingeniería en Ciencias de la Computación',
-                    pensum: currentUser.pensum || '2024',
-                    promedioAnterior: currentUser.promedioAnterior || 85.5,
-                    grado: currentUser.grado || 'Tercer año',
-                    cargaMaxima: currentUser.cargaMaxima || 5,
-                    estiloAprendizaje: currentUser.estiloAprendizaje || 'mixto',
-                    estiloClase: currentUser.estiloClase || 'con_tecnologia',
-                    cursosZonaMinima: currentUser.cursosZonaMinima || 1,
-                    fechaRegistro: currentUser.fechaRegistro || new Date().toISOString(),
-                    email: currentUser.email || `${currentUser.carnet || currentUser.id}@uvg.edu.gt`
-                });
-                console.log('✅ Datos del estudiante obtenidos desde contexto');
-            } else {
-                throw new Error('No se encontraron datos del estudiante');
-            }
+            // Si no se pudieron obtener datos de la API, mostrar error
+            setError('No se pudieron obtener los datos del estudiante desde la API');
             
         } catch (err) {
             console.error('❌ Error obteniendo datos del estudiante:', err);
-            setError(err.message);
-            
-            // Datos mock como último recurso basados en el usuario actual
-            setStudent(getMockStudentData());
+            setError(`Error general: ${err.message}`);
         } finally {
             setLoading(false);
         }
     };
 
     /**
-     * Obtiene los cursos asignados del estudiante
+     * Obtiene los cursos asignados del estudiante desde la API
      */
     const fetchCursosAsignados = async () => {
         try {
             console.log('📚 Obteniendo cursos asignados...');
             
-            // Intentar obtener desde la API
-            if (currentUser?.carnet) {
-                const response = await apiService.getCursosEstudiante(currentUser.carnet);
+            if (currentUser?.carnet || currentUser?.id) {
+                const carnetEstudiante = currentUser.carnet || currentUser.id;
                 
-                if (response && response.success && response.data) {
-                    setCursosAsignados(response.data);
-                    return;
+                try {
+                    const response = await apiService.getCursosEstudiante(carnetEstudiante);
+                    console.log('📚 Respuesta cursos API:', response);
+                    
+                    if (response && response.success && response.data) {
+                        const cursosData = Array.isArray(response.data) ? response.data : [];
+                        setCursosAsignados(cursosData);
+                        console.log('✅ Cursos obtenidos desde API:', cursosData);
+                    } else {
+                        console.log('⚠️ No se encontraron cursos en la respuesta');
+                        setCursosAsignados([]);
+                    }
+                } catch (apiError) {
+                    console.warn('⚠️ Error obteniendo cursos desde API:', apiError);
+                    setCursosAsignados([]);
                 }
             }
             
-            // Datos mock como fallback
-            setCursosAsignados(getMockCursosAsignados());
-            
         } catch (err) {
             console.error('❌ Error obteniendo cursos asignados:', err);
-            setCursosAsignados(getMockCursosAsignados());
+            setCursosAsignados([]);
         }
-    };
-
-    /**
-     * Datos mock del estudiante para fallback
-     */
-    const getMockStudentData = () => {
-        return {
-            nombreCompleto: currentUser?.name || currentUser?.nombreCompleto || 'JEREZ MELGAR, ALEJANDRO MANUEL',
-            carnet: currentUser?.id || '24678',
-            carrera: 'Ingeniería en Ciencias de la Computación',
-            pensum: '2024',
-            promedioAnterior: 85.5,
-            grado: 'Tercer año',
-            cargaMaxima: 5,
-            estiloAprendizaje: 'mixto',
-            estiloClase: 'con_tecnologia',
-            cursosZonaMinima: 1,
-            fechaRegistro: new Date().toISOString(),
-            email: `${currentUser?.id || '24678'}@uvg.edu.gt`
-        };
-    };
-
-    /**
-     * Datos mock de cursos asignados
-     */
-    const getMockCursosAsignados = () => {
-        return [
-            {
-                codigo: 'CC3001',
-                nombre: 'Estructuras de Datos',
-                profesor: 'Dr. María González',
-                seccion: 'A',
-                horario: 'Lun/Mie 08:00-09:30',
-                creditos: 4,
-                estado: 'Cursando',
-                nota: null
-            },
-            {
-                codigo: 'MAT2001',
-                nombre: 'Cálculo II',
-                profesor: 'Lic. Carlos López',
-                seccion: 'B',
-                horario: 'Mar/Jue 10:00-11:30',
-                creditos: 4,
-                estado: 'Cursando',
-                nota: null
-            },
-            {
-                codigo: 'FIS1001',
-                nombre: 'Física I',
-                profesor: 'Dr. Ana Martínez',
-                seccion: 'A',
-                horario: 'Vie 14:00-17:00',
-                creditos: 4,
-                estado: 'Cursando',
-                nota: null
-            }
-        ];
     };
 
     /**
@@ -195,7 +156,6 @@ const StudentDetails = () => {
         try {
             console.log('💾 Actualizando datos del estudiante...');
             
-            // Intentar actualizar en la API
             if (student?.carnet) {
                 const response = await apiService.updateEstudiante(student.carnet, formData);
                 
@@ -203,14 +163,14 @@ const StudentDetails = () => {
                     setStudent({ ...student, ...formData });
                     setIsEditing(false);
                     console.log('✅ Estudiante actualizado exitosamente');
-                    return;
+                    // Recargar datos para mostrar los cambios
+                    await fetchStudentData();
+                } else {
+                    throw new Error('No se pudo actualizar el estudiante');
                 }
+            } else {
+                throw new Error('No se encontró el carnet del estudiante');
             }
-            
-            // Fallback: actualizar localmente
-            setStudent({ ...student, ...formData });
-            setIsEditing(false);
-            console.log('✅ Datos actualizados localmente');
             
         } catch (err) {
             console.error('❌ Error actualizando estudiante:', err);
@@ -241,21 +201,63 @@ const StudentDetails = () => {
     const getEstadisticas = () => {
         const totalCreditos = cursosAsignados.reduce((sum, curso) => sum + (curso.creditos || 0), 0);
         const cursosActivos = cursosAsignados.filter(curso => curso.estado === 'Cursando').length;
-        const promedioGeneral = student?.promedioAnterior || 0;
+        const cursosAprobados = cursosAsignados.filter(curso => curso.estado === 'Aprobado').length;
         
         return {
             totalCreditos,
             cursosActivos,
-            promedioGeneral,
-            cargaMaxima: student?.cargaMaxima || 0
+            cursosAprobados,
+            promedioGeneral: student?.promedio || 0,
+            cargaMaxima: student?.carga_maxima || 0
         };
+    };
+
+    /**
+     * Formatea la fecha para mostrar
+     */
+    const formatearFecha = (fecha) => {
+        if (!fecha) return 'No especificada';
+        try {
+            return new Date(fecha).toLocaleDateString('es-GT', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch {
+            return fecha;
+        }
+    };
+
+    /**
+     * Formatea el estilo de aprendizaje para mostrar
+     */
+    const formatearEstiloAprendizaje = (estilo) => {
+        const estilos = {
+            'visual': 'Visual',
+            'auditivo': 'Auditivo',
+            'kinestesico': 'Kinestésico',
+            'mixto': 'Mixto'
+        };
+        return estilos[estilo] || 'No especificado';
+    };
+
+    /**
+     * Formatea el estilo de clase para mostrar
+     */
+    const formatearEstiloClase = (estilo) => {
+        const estilos = {
+            'con_tecnologia': 'Con Tecnología',
+            'sin_tecnologia': 'Sin Tecnología',
+            'mixto': 'Mixto'
+        };
+        return estilos[estilo] || 'No especificado';
     };
 
     // ===== RENDERIZADO CONDICIONAL =====
     if (loading) {
         return (
             <div className="flex">
-                <Sidebar Name={currentUser?.name || currentUser?.nombreCompleto || 'Estudiante'} />
+                <Sidebar Name={currentUser?.name || currentUser?.nombre || 'Estudiante'} />
                 <div className="ml-64 flex-1 w-full">
                     <Header />
                     <div className="flex items-center justify-center h-64">
@@ -274,7 +276,7 @@ const StudentDetails = () => {
     // ===== RENDERIZADO DEL COMPONENTE =====
     return (
         <div className="flex">
-            <Sidebar Name={student?.nombreCompleto || currentUser?.name || currentUser?.nombreCompleto || 'Estudiante'} />
+            <Sidebar Name={student?.nombre || currentUser?.name || currentUser?.nombre || 'Estudiante'} />
             <div className="ml-64 flex-1 w-full">
                 <Header />
                 <div className="p-8">
@@ -322,222 +324,220 @@ const StudentDetails = () => {
                         </div>
                     )}
 
+                    {/* Mostrar mensaje si no hay datos */}
+                    {!student && !loading && (
+                        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+                            <div className="flex">
+                                <svg className="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span>No se pudieron cargar los datos del estudiante desde la API.</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Contenido principal */}
-                    {isEditing ? (
-                        /* Modo de edición - Mostrar formulario */
-                        <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
-                            <h2 className="text-2xl font-semibold text-teal-700 mb-6">
-                                Actualizar Información Personal
-                            </h2>
-                            <SignUpForm
-                                onSubmit={handleUpdateStudent}
-                                isLoading={saving}
-                                error={error}
-                                initialData={student}
-                                isEditMode={true}
-                            />
-                        </div>
-                    ) : (
-                        /* Modo de visualización */
-                        <div className="space-y-8">
-                            {/* Tarjeta de información personal */}
-                            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Personal</h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {/* Nombre Completo */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Nombre Completo
-                                        </label>
-                                        <p className="text-gray-900 font-medium">{student?.nombreCompleto}</p>
-                                    </div>
-
-                                    {/* Carnet */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Carnet
-                                        </label>
-                                        <p className="text-gray-900">{student?.carnet}</p>
-                                    </div>
-
-                                    {/* Email */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Correo Electrónico
-                                        </label>
-                                        <p className="text-gray-900">{student?.email}</p>
-                                    </div>
-
-                                    {/* Carrera */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Carrera
-                                        </label>
-                                        <p className="text-gray-900">{student?.carrera}</p>
-                                    </div>
-
-                                    {/* Pensum */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Pensum
-                                        </label>
-                                        <p className="text-gray-900">{student?.pensum}</p>
-                                    </div>
-
-                                    {/* Grado */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Grado Académico
-                                        </label>
-                                        <p className="text-gray-900">{student?.grado}</p>
-                                    </div>
+                    {student && (
+                        <>
+                            {isEditing ? (
+                                /* Modo de edición - Mostrar formulario */
+                                <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
+                                    <h2 className="text-2xl font-semibold text-teal-700 mb-6">
+                                        Actualizar Información Personal
+                                    </h2>
+                                    <SignUpForm
+                                        onSubmit={handleUpdateStudent}
+                                        isLoading={saving}
+                                        error={error}
+                                        initialData={student}
+                                        isEditMode={true}
+                                    />
                                 </div>
-                            </div>
+                            ) : (
+                                /* Modo de visualización */
+                                <div className="space-y-8">
+                                    {/* Tarjeta de información personal */}
+                                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                                        <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Personal</h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {/* Nombre Completo */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Nombre Completo
+                                                </label>
+                                                <p className="text-gray-900 font-medium">{student.nombre || 'No especificado'}</p>
+                                            </div>
 
-                            {/* Tarjeta de información académica */}
-                            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Académica</h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {/* Promedio Anterior */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Promedio Ciclo Anterior
-                                        </label>
-                                        <p className="text-2xl font-bold text-teal-600">{student?.promedioAnterior}</p>
-                                    </div>
+                                            {/* Carnet */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Carnet
+                                                </label>
+                                                <p className="text-gray-900 font-mono text-lg">{student.carnet || 'No especificado'}</p>
+                                            </div>
 
-                                    {/* Carga Máxima */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Carga Máxima
-                                        </label>
-                                        <p className="text-2xl font-bold text-blue-600">{student?.cargaMaxima} cursos</p>
-                                    </div>
-
-                                    {/* Cursos Zona Mínima */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Cursos con Zona Mínima
-                                        </label>
-                                        <p className="text-2xl font-bold text-orange-600">{student?.cursosZonaMinima}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tarjeta de preferencias */}
-                            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                <h3 className="text-xl font-semibold text-teal-700 mb-6">Preferencias de Aprendizaje</h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Estilo de Aprendizaje */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Estilo de Aprendizaje
-                                        </label>
-                                        <div className="flex items-center">
-                                            <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium capitalize">
-                                                {student?.estiloAprendizaje || 'No especificado'}
-                                            </span>
+                                            {/* Email */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Correo Electrónico
+                                                </label>
+                                                <p className="text-gray-900">{student.email || 'No especificado'}</p>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Estilo de Clase */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Estilo de Clase Preferido
-                                        </label>
-                                        <div className="flex items-center">
-                                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                                {student?.estiloClase === 'con_tecnologia' ? 'Con Tecnología' :
-                                                 student?.estiloClase === 'sin_tecnologia' ? 'Sin Tecnología' :
-                                                 student?.estiloClase === 'mixto' ? 'Mixto' :
-                                                 'No especificado'}
-                                            </span>
+                                    {/* Tarjeta de información académica */}
+                                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                                        <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Académica</h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {/* Carrera */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Carrera
+                                                </label>
+                                                <p className="text-gray-900 font-medium">{student.carrera || 'No especificada'}</p>
+                                            </div>
+
+                                            {/* Pensum */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Pensum
+                                                </label>
+                                                <p className="text-gray-900">{student.pensum || 'No especificado'}</p>
+                                            </div>
+
+                                            {/* Grado */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Grado Académico
+                                                </label>
+                                                <p className="text-gray-900">{student.grado || 'No especificado'}</p>
+                                            </div>
+
+                                            {/* Promedio Anterior */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Promedio Ciclo Anterior
+                                                </label>
+                                                <p className="text-2xl font-bold text-teal-600">
+                                                    {student.promedio ? student.promedio.toFixed(1) : 'N/A'}
+                                                </p>
+                                            </div>
+
+                                            {/* Carga Máxima */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Carga Máxima
+                                                </label>
+                                                <p className="text-2xl font-bold text-blue-600">{student.carga_maxima || 0} cursos</p>
+                                            </div>
+
+                                            {/* Cursos Zona Mínima */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Cursos con Zona Mínima
+                                                </label>
+                                                <p className="text-2xl font-bold text-orange-600">{student.cursos_zona_minima || 0}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Tarjeta de preferencias */}
+                                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                                        <h3 className="text-xl font-semibold text-teal-700 mb-6">Preferencias de Aprendizaje</h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Estilo de Aprendizaje */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Estilo de Aprendizaje
+                                                </label>
+                                                <div className="flex items-center">
+                                                    <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
+                                                        {formatearEstiloAprendizaje(student.estilo_aprendizaje)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Estilo de Clase */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Estilo de Clase Preferido
+                                                </label>
+                                                <div className="flex items-center">
+                                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                        {formatearEstiloClase(student.estilo_clase)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Tabla de cursos asignados */}
+                                    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                                        <div className="p-6 border-b border-gray-200">
+                                            <h3 className="text-xl font-semibold text-teal-700">Cursos Asignados</h3>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            {cursosAsignados && cursosAsignados.length > 0 ? (
+                                                <table className="w-full text-sm text-left text-gray-500">
+                                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                                        <tr>
+                                                            <th scope="col" className="px-6 py-3">Código</th>
+                                                            <th scope="col" className="px-6 py-3">Curso</th>
+                                                            <th scope="col" className="px-6 py-3">Profesor</th>
+                                                            <th scope="col" className="px-6 py-3">Estado</th>
+                                                            <th scope="col" className="px-6 py-3">Nota</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {cursosAsignados.map((curso, index) => (
+                                                            <tr key={index} className="bg-white border-b hover:bg-gray-50">
+                                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                                                    {curso.codigo || curso.codigo_curso || 'N/A'}
+                                                                </td>
+                                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                                                    {curso.nombre || curso.nombre_curso || 'N/A'}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {curso.profesor || curso.nombre_profesor || 'N/A'}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                                        curso.estado === 'Cursando' || curso.estado === 'activo'
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : curso.estado === 'Aprobado' || curso.estado === 'aprobado'
+                                                                            ? 'bg-blue-100 text-blue-800'
+                                                                            : 'bg-gray-100 text-gray-800'
+                                                                    }`}>
+                                                                        {curso.estado || 'Activo'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {curso.nota !== null && curso.nota !== undefined 
+                                                                        ? curso.nota 
+                                                                        : 'En progreso'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="p-6 text-center text-gray-500">
+                                                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                    </svg>
+                                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No hay cursos asignados</h3>
+                                                    <p className="text-gray-500">Aún no tienes cursos asignados para este ciclo.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Sección de estadísticas */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* Cursos Actuales */}
-                                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                    <h3 className="text-lg font-semibold text-teal-700 mb-2">Cursos Actuales</h3>
-                                    <p className="text-3xl font-bold">{estadisticas.cursosActivos}</p>
-                                </div>
-                                
-                                {/* Promedio General */}
-                                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                    <h3 className="text-lg font-semibold text-teal-700 mb-2">Promedio General</h3>
-                                    <p className="text-3xl font-bold">{estadisticas.promedioGeneral}</p>
-                                </div>
-                                
-                                {/* Carga Disponible */}
-                                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                    <h3 className="text-lg font-semibold text-teal-700 mb-2">Carga Disponible</h3>
-                                    <p className="text-3xl font-bold">
-                                        {Math.max(0, estadisticas.cargaMaxima - estadisticas.cursosActivos)}
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            {/* Tabla de cursos asignados */}
-                            <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-                                <div className="p-6 border-b border-gray-200">
-                                    <h3 className="text-xl font-semibold text-teal-700">Cursos Asignados</h3>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    {cursosAsignados && cursosAsignados.length > 0 ? (
-                                        <table className="w-full text-sm text-left text-gray-500">
-                                            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" className="px-6 py-3">Código</th>
-                                                    <th scope="col" className="px-6 py-3">Curso</th>
-                                                    <th scope="col" className="px-6 py-3">Profesor</th>
-                                                    <th scope="col" className="px-6 py-3">Sección</th>
-                                                    <th scope="col" className="px-6 py-3">Horario</th>
-                                                    <th scope="col" className="px-6 py-3">Créditos</th>
-                                                    <th scope="col" className="px-6 py-3">Estado</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {cursosAsignados.map((curso, index) => (
-                                                    <tr key={index} className="bg-white border-b hover:bg-gray-50">
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{curso.codigo}</td>
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{curso.nombre}</td>
-                                                        <td className="px-6 py-4">{curso.profesor}</td>
-                                                        <td className="px-6 py-4">{curso.seccion}</td>
-                                                        <td className="px-6 py-4">{curso.horario}</td>
-                                                        <td className="px-6 py-4">{curso.creditos}</td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                                curso.estado === 'Cursando' 
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : curso.estado === 'Aprobado'
-                                                                    ? 'bg-blue-100 text-blue-800'
-                                                                    : 'bg-red-100 text-red-800'
-                                                            }`}>
-                                                                {curso.estado}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    ) : (
-                                        <div className="p-6 text-center text-gray-500">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                            </svg>
-                                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay cursos asignados</h3>
-                                            <p className="text-gray-500">Aún no tienes cursos asignados para este ciclo.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
