@@ -13,6 +13,8 @@ class ApiService {
               ...options,
           };
 
+          console.log(`🌐 Realizando petición: ${config.method || 'GET'} ${url}`);
+          
           const response = await fetch(url, config);
           
           if (!response.ok) {
@@ -29,12 +31,14 @@ class ApiService {
               throw new Error(errorMessage);
           }
 
-          return await response.json();
+          const result = await response.json();
+          console.log(`✅ Respuesta exitosa de ${endpoint}:`, result);
+          return result;
       } catch (error) {
           console.error('❌ Error en petición API:', {
               endpoint,
               url: `${API_BASE_URL}${endpoint}`,
-              error: error.toString(),  // Mostrar solo el mensaje
+              error: error.toString(),
               stack: error.stack
           });
           throw error;
@@ -64,9 +68,14 @@ class ApiService {
     return this.makeRequest('/estudiantes');
   }
 
-  // Obtener un estudiante por nombre
-  async getEstudiante(nombre) {
-    return this.makeRequest(`/estudiantes/${encodeURIComponent(nombre)}`);
+  // Obtener un estudiante por carnet
+  async getEstudiante(carnet) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}`);
+  }
+
+  // Obtener un estudiante por nombre (nuevo método)
+  async getEstudianteByName(nombre) {
+    return this.makeRequest(`/estudiantes/nombre/${encodeURIComponent(nombre)}`);
   }
 
   // Crear un nuevo estudiante
@@ -78,17 +87,30 @@ class ApiService {
   }
 
   // Actualizar un estudiante
-  async updateEstudiante(nombre, estudianteData) {
-    return this.makeRequest(`/estudiantes/${encodeURIComponent(nombre)}`, {
+  async updateEstudiante(carnet, estudianteData) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}`, {
       method: 'PUT',
       body: JSON.stringify(estudianteData),
     });
   }
 
   // Eliminar un estudiante
-  async deleteEstudiante(nombre) {
-    return this.makeRequest(`/estudiantes/${encodeURIComponent(nombre)}`, {
+  async deleteEstudiante(carnet) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(carnet)}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Obtener estudiantes similares
+  async getEstudiantesSimilares(nombre) {
+    return this.makeRequest(`/estudiantes/${encodeURIComponent(nombre)}/similares`);
+  }
+
+  // Login de estudiante
+  async loginEstudiante(credenciales) {
+    return this.makeRequest('/estudiantes/login', {
+      method: 'POST',
+      body: JSON.stringify(credenciales),
     });
   }
 
@@ -168,11 +190,6 @@ class ApiService {
     });
   }
 
-  // Obtener profesores de un curso específico
-  async getProfesoresPorCurso(codigoCurso) {
-    return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/profesores`);
-  }
-
   // Obtener estudiantes de un curso específico
   async getEstudiantesPorCurso(codigoCurso) {
     return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/estudiantes`);
@@ -243,7 +260,19 @@ class ApiService {
   
   // Verificar estado de la API
   async healthCheck() {
-    return this.makeRequest('/health');
+    try {
+      const response = await this.makeRequest('/health');
+      return {
+        success: true,
+        ...response
+      };
+    } catch (error) {
+      console.warn('⚠️ Health check falló:', error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 }
 

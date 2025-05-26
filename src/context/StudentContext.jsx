@@ -30,35 +30,74 @@ export const StudentProvider = ({ children }) => {
   /**
    * Obtiene los datos del estudiante desde la API
    */
-  const fetchStudentData = async (studentName) => {
-    if (!studentName) return;
+  const fetchStudentData = async (studentIdentifier) => {
+    if (!studentIdentifier) return;
     
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.getEstudiante(studentName);
-      if (response.success && response.data) {
+      let response = null;
+      
+      // Intentar obtener por diferentes métodos según el tipo de identificador
+      try {
+        // Si parece ser un carnet (número), usar el endpoint de carnet
+        if (/^\d+$/.test(studentIdentifier)) {
+          console.log(`🔍 Obteniendo estudiante por carnet: ${studentIdentifier}`);
+          response = await apiService.getEstudiante(studentIdentifier);
+        } else {
+          // Si es texto, usar el endpoint de nombre
+          console.log(`🔍 Obteniendo estudiante por nombre: ${studentIdentifier}`);
+          response = await apiService.getEstudianteByName(studentIdentifier);
+        }
+      } catch (firstAttemptError) {
+        // Si falla el primer intento, probar con el otro método
+        console.warn('⚠️ Primer intento fallido, probando método alternativo');
+        try {
+          if (/^\d+$/.test(studentIdentifier)) {
+            response = await apiService.getEstudianteByName(studentIdentifier);
+          } else {
+            response = await apiService.getEstudiante(studentIdentifier);
+          }
+        } catch (secondAttemptError) {
+          console.error('❌ Ambos intentos de obtener datos fallaron');
+          throw secondAttemptError;
+        }
+      }
+      
+      if (response && response.success && response.data) {
         const student = response.data;
+        console.log('📊 Datos del estudiante obtenidos de la API:', student);
+        
         setStudentData({
-          id: student.id || "24678",
-          carne: student.carne || "24678",
-          name: student.nombre || studentName,
-          carrera: student.carrera || "Ingeniería en Ciencias de la Computación",
-          pensum: student.pensum || "2021",
-          promedioCicloAnterior: student.promedio_ciclo_anterior || 85.5,
-          grado: student.grado || "Segundo año",
-          cargaMaxima: student.carga_maxima || 18,
+          id: student.id || student.carnet || student.carne,
+          carne: student.carnet || student.carne,
+          name: student.nombre || student.name,
+          carrera: student.carrera,
+          pensum: student.pensum,
+          promedioCicloAnterior: student.promedio_ciclo_anterior || student.promedio,
+          grado: student.grado,
+          cargaMaxima: student.carga_maxima,
           estiloAprendizaje: student.estilo_aprendizaje,
           estiloClase: student.estilo_clase,
           horasEstudio: student.horas_estudio,
-          participacionClase: student.participacion_clase
+          participacionClase: student.participacion_clase,
+          email: student.email,
+          puntuacionTotal: student.puntuacion_total
         });
+      } else {
+        throw new Error('La API no devolvió datos válidos del estudiante');
       }
     } catch (err) {
       console.error('Error fetching student data:', err);
       setError(err.message);
-      // Cargar datos mock en caso de error
-      setStudentData(getMockStudentData(studentName));
+      // Solo usar datos mock si no tenemos datos reales del usuario
+      if (!currentUser || !currentUser.name) {
+        console.warn('⚠️ Usando datos mock debido a falta de información del usuario');
+        setStudentData(getMockStudentData(studentIdentifier));
+      } else {
+        // No establecer datos mock si tenemos información real del usuario
+        setStudentData(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -144,13 +183,13 @@ export const StudentProvider = ({ children }) => {
   /**
    * Actualiza los datos del estudiante
    */
-  const updateStudent = async (studentName, updateData) => {
+  const updateStudent = async (studentIdentifier, updateData) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.updateEstudiante(studentName, updateData);
+      const response = await apiService.updateEstudiante(studentIdentifier, updateData);
       if (response.success) {
-        await fetchStudentData(studentName); // Recargar los datos
+        await fetchStudentData(studentIdentifier); // Recargar los datos
         return response.data;
       }
     } catch (err) {
@@ -162,32 +201,60 @@ export const StudentProvider = ({ children }) => {
     }
   };
 
-  // ===== DATOS MOCK PARA DESARROLLO =====
-  const getMockStudentData = (studentName) => ({
-    id: "24678",
-    carne: "24678",
-    name: studentName || "JEREZ MELGAR, ALEJANDRO MANUEL",
-    carrera: "Ingeniería en Ciencias de la Computación",
-    pensum: "2021",
-    promedioCicloAnterior: 85.5,
-    grado: "Segundo año",
-    cargaMaxima: 18,
-    estiloAprendizaje: "visual",
-    estiloClase: "mixta",
-    horasEstudio: 20,
-    participacionClase: 8
-  });
+  // ===== DATOS MOCK PARA DESARROLLO (solo usar cuando no hay datos reales) =====
+  const getMockStudentData = (studentIdentifier) => {
+    console.warn('⚠️ Usando datos mock - esto solo debería pasar en desarrollo sin conexión a API');
+    return {
+      id: studentIdentifier || "estudiante-demo",
+      carne: /^\d+$/.test(studentIdentifier) ? studentIdentifier : "demo-001",
+      name: studentIdentifier && !/^\d+$/.test(studentIdentifier) ? studentIdentifier : "ESTUDIANTE DEMO",
+      carrera: "Ingeniería en Ciencias de la Computación",
+      pensum: "2021",
+      promedioCicloAnterior: 85.5,
+      grado: "Segundo año",
+      cargaMaxima: 18,
+      estiloAprendizaje: "visual",
+      estiloClase: "mixta",
+      horasEstudio: 20,
+      participacionClase: 8
+    };
+  };
 
   // ===== EFECTOS =====
   useEffect(() => {
-    if (currentUser && currentUser.name) {
-      fetchStudentData(currentUser.name);
+    // Solo intentar cargar datos si tenemos un usuario autenticado con información válida
+    if (currentUser) {
+      // Priorizar carnet si está disponible, sino usar nombre
+      const identifier = currentUser.carnet || currentUser.carne || currentUser.name;
+      if (identifier) {
+        console.log(`🔄 Usuario autenticado detectado, cargando datos para: ${identifier}`);
+        fetchStudentData(identifier);
+      } else {
+        console.warn('⚠️ Usuario autenticado pero sin identificador válido (carnet/nombre)');
+      }
+    } else {
+      console.log('👤 No hay usuario autenticado todavía');
+      // Limpiar datos cuando no hay usuario
+      setStudentData(null);
     }
   }, [currentUser]);
 
+  // ===== FUNCIONES AUXILIARES =====
+  const getDisplayValue = (contextValue, mockValue) => {
+    // Si tenemos datos reales del contexto, usarlos; sino usar mock solo si no hay usuario real
+    if (studentData && studentData[contextValue]) {
+      return studentData[contextValue];
+    }
+    // Solo usar mock si no tenemos usuario real o datos reales
+    if (!currentUser || !currentUser.name) {
+      return mockValue;
+    }
+    return null;
+  };
+
   // ===== VALOR DEL CONTEXTO =====
   const value = {
-    studentData: studentData || getMockStudentData(currentUser?.name),
+    studentData,
     loading,
     error,
     recommendations,
@@ -196,15 +263,17 @@ export const StudentProvider = ({ children }) => {
     registerCourseApproval,
     createStudent,
     updateStudent,
+    
     // Propiedades individuales para compatibilidad con componentes existentes
-    id: studentData?.id || "24678",
-    carne: studentData?.carne || "24678", 
-    name: studentData?.name || currentUser?.name || "JEREZ MELGAR, ALEJANDRO MANUEL",
-    carrera: studentData?.carrera || "Ingeniería en Ciencias de la Computación",
-    pensum: studentData?.pensum || "2021",
-    promedioCicloAnterior: studentData?.promedioCicloAnterior || 85.5,
-    grado: studentData?.grado || "Segundo año",
-    cargaMaxima: studentData?.cargaMaxima || 18
+    // Estas ahora usan los datos reales cuando están disponibles
+    id: getDisplayValue('id', currentUser?.carnet || currentUser?.carne || currentUser?.name),
+    carne: getDisplayValue('carne', currentUser?.carnet || currentUser?.carne),
+    name: getDisplayValue('name', currentUser?.name),
+    carrera: getDisplayValue('carrera', 'Ingeniería en Ciencias de la Computación'),
+    pensum: getDisplayValue('pensum', '2021'),
+    promedioCicloAnterior: getDisplayValue('promedioCicloAnterior', 85.5),
+    grado: getDisplayValue('grado', 'Segundo año'),
+    cargaMaxima: getDisplayValue('cargaMaxima', 18)
   };
 
   return (

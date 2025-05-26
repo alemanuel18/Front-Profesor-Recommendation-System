@@ -4,7 +4,7 @@
 // @ Author : Alejandro Jerez, Marcelo Detlefsen
 
 // Este archivo representa la página principal del sistema de recomendación de profesores.
-// Actualizado para conectarse con la API del backend.
+// Actualizado para conectarse correctamente con la API del backend.
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -31,7 +31,7 @@ const Home = () => {
     // ===== EFECTOS =====
     useEffect(() => {
         initializePage();
-    }, [studentData.name]);
+    }, [studentData.carne, studentData.name]);
 
     // ===== FUNCIONES =====
 
@@ -47,87 +47,96 @@ const Home = () => {
             const healthCheck = await apiService.healthCheck();
             setApiHealthy(healthCheck.success || false);
 
-            // Si tenemos el nombre del estudiante, obtener sus datos
-            if (studentData.name) {
-                await fetchStudentData(studentData.name);
+            // Intentar obtener datos del estudiante desde la API
+            if (studentData.carne || studentData.name) {
+                await fetchStudentData();
             } else {
-                // Usar datos del contexto si no hay conexión API
-                setStudentInfo({
-                    id: studentData.id,
-                    carne: studentData.carne,
-                    name: studentData.name,
-                    carrera: studentData.carrera,
-                    pensum: studentData.pensum,
-                    promedioCicloAnterior: studentData.promedioCicloAnterior,
-                    grado: studentData.grado,
-                    cargaMaxima: studentData.cargaMaxima
-                });
+                // Usar datos del contexto como fallback
+                setStudentFromContextData();
             }
 
         } catch (err) {
             console.error('Error inicializando la página:', err);
-            setError(err.message);
+            setError(`No se pudo conectar con el servidor: ${err.message}`);
+            setApiHealthy(false);
             
             // Usar datos del contexto como fallback
-            setStudentInfo({
-                id: studentData.id,
-                carne: studentData.carne,
-                name: studentData.name,
-                carrera: studentData.carrera,
-                pensum: studentData.pensum,
-                promedioCicloAnterior: studentData.promedioCicloAnterior,
-                grado: studentData.grado,
-                cargaMaxima: studentData.cargaMaxima
-            });
+            setStudentFromContextData();
         } finally {
             setLoading(false);
         }
     };
 
     /**
+     * Establece la información del estudiante usando datos del contexto
+     */
+    const setStudentFromContextData = () => {
+        setStudentInfo({
+            id: studentData.id,
+            carne: studentData.carne,
+            name: studentData.name,
+            carrera: studentData.carrera,
+            pensum: studentData.pensum,
+            promedioCicloAnterior: studentData.promedioCicloAnterior,
+            grado: studentData.grado,
+            cargaMaxima: studentData.cargaMaxima
+        });
+    };
+
+    /**
      * Obtiene los datos del estudiante desde la API
      */
-    const fetchStudentData = async (studentName) => {
+    const fetchStudentData = async () => {
         try {
-            console.log(`🔍 Obteniendo datos del estudiante: ${studentName}`);
+            let response = null;
             
-            const response = await apiService.getEstudiante(studentName);
+            // Primero intentar buscar por carnet si está disponible
+            if (studentData.carne) {
+                console.log(`🔍 Obteniendo datos del estudiante por carnet: ${studentData.carne}`);
+                try {
+                    response = await apiService.getEstudiante(studentData.carne);
+                } catch (carnetError) {
+                    console.warn('⚠️ No se pudo obtener por carnet, intentando por nombre:', carnetError);
+                    
+                    // Si falla por carnet, intentar por nombre
+                    if (studentData.name) {
+                        response = await apiService.getEstudianteByName(studentData.name);
+                    }
+                }
+            } else if (studentData.name) {
+                // Si no hay carnet, buscar directamente por nombre
+                console.log(`🔍 Obteniendo datos del estudiante por nombre: ${studentData.name}`);
+                response = await apiService.getEstudianteByName(studentData.name);
+            }
             
             if (response && response.success && response.data) {
                 const student = response.data;
+                console.log('📊 Datos recibidos de la API:', student);
+                
                 setStudentInfo({
                     id: student.id || studentData.id,
-                    carne: student.carne || studentData.carne,
-                    name: student.nombre || studentName,
+                    carne: student.carnet || student.carne || studentData.carne,
+                    name: student.nombre || student.name || studentData.name,
                     carrera: student.carrera || studentData.carrera,
                     pensum: student.pensum || studentData.pensum,
-                    promedioCicloAnterior: student.promedio_ciclo_anterior || studentData.promedioCicloAnterior,
+                    promedioCicloAnterior: student.promedio_ciclo_anterior || student.promedio || studentData.promedioCicloAnterior,
                     grado: student.grado || studentData.grado,
                     cargaMaxima: student.carga_maxima || studentData.cargaMaxima,
                     estiloAprendizaje: student.estilo_aprendizaje,
-                    preferenciaClase: student.preferencia_clase,
-                    cursosAprobados: student.cursos_aprobados || []
+                    preferenciaClase: student.estilo_clase || student.preferencia_clase,
+                    cursosAprobados: student.cursos_aprobados || [],
+                    email: student.email,
+                    puntuacionTotal: student.puntuacion_total
                 });
                 
-                console.log('✅ Datos del estudiante obtenidos desde API');
+                console.log('✅ Datos del estudiante procesados desde API');
             } else {
-                throw new Error('No se pudieron obtener los datos del estudiante');
+                throw new Error('La API no devolvió datos válidos del estudiante');
             }
             
         } catch (apiError) {
-            console.warn('⚠️ Error obteniendo datos de API, usando datos del contexto:', apiError);
-            
-            // Fallback a datos del contexto
-            setStudentInfo({
-                id: studentData.id,
-                carne: studentData.carne,
-                name: studentName,
-                carrera: studentData.carrera,
-                pensum: studentData.pensum,
-                promedioCicloAnterior: studentData.promedioCicloAnterior,
-                grado: studentData.grado,
-                cargaMaxima: studentData.cargaMaxima
-            });
+            console.warn('⚠️ Error obteniendo datos de API:', apiError);
+            throw apiError; // Re-lanzar para que sea manejado por initializePage
         }
     };
 
@@ -156,6 +165,9 @@ const Home = () => {
                         <div className="text-center">
                             <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Cargando información del estudiante...</p>
+                            {studentData.carne && (
+                                <p className="text-sm text-gray-500 mt-2">Carnet: {studentData.carne}</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -214,13 +226,29 @@ const Home = () => {
                     {error && (
                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
                             <div className="flex">
-                                <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                 </svg>
-                                <span>Aviso: {error}</span>
+                                <div>
+                                    <strong>Aviso:</strong> {error}
+                                    <p className="text-sm mt-1">Se están mostrando los datos disponibles localmente.</p>
+                                </div>
                             </div>
                         </div>
                     )}
+
+                    {/* Información de depuración (solo mostrar en desarrollo) */}
+                    {/* {process.env.NODE_ENV === 'development' && (
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-6">
+                            <h3 className="text-sm font-medium text-blue-800 mb-2">Información de Depuración</h3>
+                            <div className="text-xs text-blue-700">
+                                <p>Carnet del contexto: {studentData.carne || 'No disponible'}</p>
+                                <p>Nombre del contexto: {studentData.name || 'No disponible'}</p>
+                                <p>API saludable: {apiHealthy ? 'Sí' : 'No'}</p>
+                                <p>Datos cargados desde: {apiHealthy && !error ? 'API' : 'Contexto local'}</p>
+                            </div>
+                        </div>
+                    )} */}
 
                     {/* Tarjeta que muestra información detallada del estudiante */}
                     <div className="flex justify-center mt-8">
@@ -237,26 +265,48 @@ const Home = () => {
                     </div>
 
                     {/* Información adicional si se obtuvieron datos de la API */}
-                    {studentInfo?.estiloAprendizaje && (
+                    {(studentInfo?.estiloAprendizaje || studentInfo?.preferenciaClase || studentInfo?.email) && (
                         <div className="flex justify-center mt-6">
                             <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 max-w-2xl w-full">
-                                <h3 className="text-lg font-semibold text-teal-700 mb-4">Perfil de Aprendizaje</h3>
+                                <h3 className="text-lg font-semibold text-teal-700 mb-4">
+                                    Información Adicional del Perfil
+                                </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <span className="text-sm text-gray-600">Estilo de Aprendizaje:</span>
-                                        <p className="font-medium text-gray-900 capitalize">
-                                            {studentInfo.estiloAprendizaje}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-gray-600">Preferencia de Clase:</span>
-                                        <p className="font-medium text-gray-900 capitalize">
-                                            {studentInfo.preferenciaClase}
-                                        </p>
-                                    </div>
+                                    {studentInfo.estiloAprendizaje && (
+                                        <div>
+                                            <span className="text-sm text-gray-600">Estilo de Aprendizaje:</span>
+                                            <p className="font-medium text-gray-900 capitalize">
+                                                {studentInfo.estiloAprendizaje}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {studentInfo.preferenciaClase && (
+                                        <div>
+                                            <span className="text-sm text-gray-600">Preferencia de Clase:</span>
+                                            <p className="font-medium text-gray-900 capitalize">
+                                                {studentInfo.preferenciaClase}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {studentInfo.email && (
+                                        <div className="md:col-span-2">
+                                            <span className="text-sm text-gray-600">Email:</span>
+                                            <p className="font-medium text-gray-900">
+                                                {studentInfo.email}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {studentInfo.puntuacionTotal && (
+                                        <div>
+                                            <span className="text-sm text-gray-600">Puntuación Total:</span>
+                                            <p className="font-medium text-gray-900">
+                                                {studentInfo.puntuacionTotal}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                                 {studentInfo.cursosAprobados?.length > 0 && (
-                                    <div className="mt-4">
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
                                         <span className="text-sm text-gray-600">Cursos Aprobados:</span>
                                         <p className="font-medium text-gray-900">
                                             {studentInfo.cursosAprobados.length} cursos completados
@@ -273,7 +323,7 @@ const Home = () => {
                             onClick={handleNavigateToCourses}
                             className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors duration-300 shadow-md hover:shadow-lg"
                         >
-                            {apiHealthy ? 'Ver Recomendaciones Personalizadas' : 'Asignarse'}
+                            {apiHealthy ? 'Ver Recomendaciones Personalizadas' : 'Ver Cursos Disponibles'}
                         </button>
                     </div>
                 </div>
