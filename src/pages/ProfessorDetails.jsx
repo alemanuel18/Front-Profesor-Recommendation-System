@@ -298,47 +298,6 @@ const ProfessorDetails = () => {
                                     )}
                                 </div>
 
-                                {/* Email */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Correo Electrónico
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type="email"
-                                            value={editData.email}
-                                            onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                        />
-                                    ) : (
-                                        <p className="text-gray-900">{professor?.email || 'No especificado'}</p>
-                                    )}
-                                </div>
-
-                                {/* Departamento */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Departamento
-                                    </label>
-                                    {isEditing ? (
-                                        <select
-                                            value={editData.departamento}
-                                            onChange={(e) => handleInputChange('departamento', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                        >
-                                            <option value="">Seleccionar departamento</option>
-                                            <option value="Matemáticas">Matemáticas</option>
-                                            <option value="Estadística">Estadística</option>
-                                            <option value="Ciencias de la Computación">Ciencias de la Computación</option>
-                                            <option value="Física">Física</option>
-                                            <option value="Química">Química</option>
-                                            <option value="Biología">Biología</option>
-                                        </select>
-                                    ) : (
-                                        <p className="text-gray-900">{professor?.departamento || 'No especificado'}</p>
-                                    )}
-                                </div>
-
                                 {/* Años de experiencia */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
