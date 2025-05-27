@@ -667,12 +667,21 @@ const Seleccion_Profesores = () => {
                                     {/* Imagen y datos básicos */}
                                     <div className="p-6">
                                         <div className="flex items-center mb-4">
-                                            <img
-                                                src={recommendation.image}
-                                                alt={recommendation.professorName}
-                                                className="w-16 h-16 rounded-full object-cover mr-4"
+                                            <img 
+                                                className="w-10 h-10 rounded-full object-cover bg-gray-200"
+                                                src="/images/student-avatar.jpg"
+                                                alt={`Avatar de ${recommendation.professorName || 'Profesor'}`}
                                                 onError={(e) => {
-                                                    e.target.src = getProfessorImage(index);
+                                                    e.target.onerror = null;
+                                                    e.target.className = "w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center";
+                                                    e.target.src = "";
+                                                    e.target.outerHTML = `
+                                                        <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                                                            <span class="text-teal-800 font-medium text-sm">
+                                                                ${(recommendation.professorName || 'P').charAt(0).toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                    `;
                                                 }}
                                             />
                                             <div className="flex-1">
