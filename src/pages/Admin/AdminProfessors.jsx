@@ -1,7 +1,7 @@
 // @ Front-Profesor-Recommendation-System
 // @ File Name : AdminProfessors.jsx
 // @ Date : 26/05/2025
-// @ Author : Alejandro Manuel Jerez Melgar 24678
+// @ Author : Alejandro Jerez, Marcelo Detlefsen
 
 /**
  * Componente AdminProfessors
