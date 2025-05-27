@@ -4,10 +4,11 @@ import Home from './pages/Home';
 import Materias from './pages/Materias';
 import Seleccion_Profesores from './pages/Seleccion_Profesores';
 import Login from './pages/Login';
-import ProfessorDetails from './pages/ProfessorDetails';
-import StudentDetails from './pages/StudentDetails'; // Agregar import
+import StudentDetails from './pages/StudentDetails';
 import AdminProfessors from './pages/Admin/AdminProfessors';
+import ProfessorDetails from './pages/ProfessorDetails';
 import AdminCourses from './pages/Admin/AdminCourses';
+import CoursesDetails from './pages/CoursesDetails';
 import { StudentProvider } from './context/StudentContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProfessorProvider } from './context/ProfessorContext';
@@ -58,15 +59,21 @@ function App() {
                 </AdminProtectedRoute>
               } />
 
+              <Route path="/admin/professors/:professorId" element={
+                <AdminProtectedRoute>
+                  <ProfessorDetails />
+                </AdminProtectedRoute>
+              } />
+
               <Route path="/admin/courses" element={
                 <AdminProtectedRoute>
                   <AdminCourses />
                 </AdminProtectedRoute>
               } />
 
-              <Route path="/admin/professors/:professorId" element={
+              <Route path="/admin/courses/:courseId" element={
                 <AdminProtectedRoute>
-                  <ProfessorDetails />
+                  <CoursesDetails />
                 </AdminProtectedRoute>
               } />
               

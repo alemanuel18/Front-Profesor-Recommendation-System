@@ -44,7 +44,67 @@ const CourseDetails = () => {
         }
     }, [courseId, isAdmin, navigate]);
 
-    // ===== FUNCIONES =====
+    // ===== FUNCIONES AUXILIARES =====
+
+    /**
+     * Función para extraer mensaje de error legible
+     */
+    const extractErrorMessage = (error) => {
+        console.log('🔍 Analizando error:', error);
+        
+        // Si es un string, devolverlo directamente
+        if (typeof error === 'string') {
+            return error;
+        }
+        
+        // Si es un objeto con message
+        if (error && error.message) {
+            return error.message;
+        }
+        
+        // Si es una respuesta de API con estructura específica
+        if (error && error.response) {
+            if (error.response.data) {
+                if (error.response.data.detail) {
+                    return error.response.data.detail;
+                }
+                if (error.response.data.message) {
+                    return error.response.data.message;
+                }
+                if (typeof error.response.data === 'string') {
+                    return error.response.data;
+                }
+            }
+            if (error.response.statusText) {
+                return `Error ${error.response.status}: ${error.response.statusText}`;
+            }
+        }
+        
+        // Si es un error de red
+        if (error && error.code === 'NETWORK_ERROR') {
+            return 'Error de conexión. Verifique su conexión a internet y que el servidor esté disponible.';
+        }
+        
+        // Si es un error de timeout
+        if (error && error.code === 'ECONNABORTED') {
+            return 'La petición tardó demasiado tiempo. Inténtelo nuevamente.';
+        }
+        
+        // Intentar convertir el objeto a string de manera útil
+        try {
+            const errorStr = JSON.stringify(error, null, 2);
+            if (errorStr !== '{}') {
+                return `Error del servidor: ${errorStr}`;
+            }
+        } catch (e) {
+            // Si no se puede serializar, usar toString
+        }
+        
+        // Último recurso
+        return error?.toString() || 'Error desconocido. Inténtelo nuevamente.';
+    };
+
+    // ===== FUNCIONES PRINCIPALES =====
 
     /**
      * Obtiene los datos del curso desde la API
@@ -54,6 +114,8 @@ const CourseDetails = () => {
         setError(null);
 
         try {
+            console.log(`🔍 Obteniendo datos del curso: ${courseId}`);
+            
             const response = await apiService.getCurso(courseId);
             
             if (response && response.success && response.data) {
@@ -72,13 +134,16 @@ const CourseDetails = () => {
                     departamento: courseData.departamento,
                     creditos: courseData.creditos || 0
                 });
+                
+                console.log('✅ Datos del curso obtenidos:', courseData);
             } else {
-                throw new Error('No se encontraron datos del curso');
+                throw new Error(response?.message || 'No se encontraron datos del curso');
             }
             
         } catch (err) {
-            console.error('Error obteniendo datos del curso:', err);
-            setError(`Error al cargar los datos del curso: ${err.message}`);
+            console.error('❌ Error obteniendo datos del curso:', err);
+            const errorMessage = extractErrorMessage(err);
+            setError(`Error al cargar los datos del curso: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -92,18 +157,71 @@ const CourseDetails = () => {
         setError(null);
 
         try {
-            const response = await apiService.updateCurso(course.codigo, editData);
+            console.log('💾 Guardando cambios del curso...');
+            console.log('Datos a enviar:', editData);
+            
+            // Validar datos antes de enviar
+            if (!editData.nombre || !editData.nombre.trim()) {
+                throw new Error('El nombre del curso es obligatorio');
+            }
+            
+            if (!editData.departamento || !editData.departamento.trim()) {
+                throw new Error('El departamento es obligatorio');
+            }
+            
+            if (editData.creditos < 0 || editData.creditos > 20) {
+                throw new Error('Los créditos deben estar entre 0 y 20');
+            }
+
+            // Preparar datos para actualización (solo campos que cambiaron)
+            const updateData = {};
+            
+            if (editData.nombre !== course.nombre) {
+                updateData.nombre = editData.nombre.trim();
+            }
+            if (editData.departamento !== course.departamento) {
+                updateData.departamento = editData.departamento.trim();
+            }
+            if (editData.creditos !== course.creditos) {
+                updateData.creditos = parseInt(editData.creditos);
+            }
+
+            // Si no hay cambios, no hacer nada
+            if (Object.keys(updateData).length === 0) {
+                console.log('ℹ️ No hay cambios para guardar');
+                setIsEditing(false);
+                return;
+            }
+
+            console.log('📤 Datos de actualización:', updateData);
+
+            const response = await apiService.updateCurso(course.codigo, updateData);
             
             if (response && response.success) {
-                setCourse({ ...course, ...editData });
+                console.log('✅ Curso actualizado exitosamente:', response.data);
+                
+                // Actualizar el estado local con los nuevos datos
+                setCourse({ 
+                    ...course, 
+                    nombre: editData.nombre.trim(),
+                    departamento: editData.departamento.trim(),
+                    creditos: parseInt(editData.creditos)
+                });
+                
                 setIsEditing(false);
+                
+                // Mostrar mensaje de éxito temporal
+                const successMessage = 'Curso actualizado exitosamente';
+                console.log('✅ ' + successMessage);
+                
             } else {
-                throw new Error('Error al actualizar el curso');
+                throw new Error(response?.message || 'Error al actualizar el curso');
             }
             
         } catch (err) {
-            console.error('Error guardando cambios:', err);
-            setError(err.message);
+            console.error('❌ Error guardando cambios:', err);
+            const errorMessage = extractErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setSaving(false);
         }
@@ -117,6 +235,11 @@ const CourseDetails = () => {
             ...prev,
             [field]: value
         }));
+        
+        // Limpiar error al hacer cambios
+        if (error) {
+            setError(null);
+        }
     };
 
     /**
@@ -151,7 +274,10 @@ const CourseDetails = () => {
                 <div className="ml-64 flex-1 w-full">
                     <Header />
                     <div className="flex items-center justify-center h-64">
-                        <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-gray-600">Cargando información del curso...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -258,7 +384,7 @@ const CourseDetails = () => {
                                 {/* Nombre */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nombre del Curso
+                                        Nombre del Curso *
                                     </label>
                                     {isEditing ? (
                                         <input
@@ -266,6 +392,7 @@ const CourseDetails = () => {
                                             value={editData.nombre}
                                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            placeholder="Ingrese el nombre del curso"
                                         />
                                     ) : (
                                         <p className="text-gray-900 font-medium">{course?.nombre}</p>
@@ -281,8 +408,9 @@ const CourseDetails = () => {
                                         <input
                                             type="text"
                                             value={editData.codigo}
-                                            onChange={(e) => handleInputChange('codigo', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            disabled
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                                            title="El código del curso no se puede modificar"
                                         />
                                     ) : (
                                         <p className="text-gray-900">{course?.codigo}</p>
@@ -292,7 +420,7 @@ const CourseDetails = () => {
                                 {/* Departamento */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Departamento
+                                        Departamento *
                                     </label>
                                     {isEditing ? (
                                         <input
@@ -300,6 +428,7 @@ const CourseDetails = () => {
                                             value={editData.departamento}
                                             onChange={(e) => handleInputChange('departamento', e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            placeholder="Ingrese el departamento"
                                         />
                                     ) : (
                                         <p className="text-gray-900">{course?.departamento}</p>
@@ -309,21 +438,32 @@ const CourseDetails = () => {
                                 {/* Créditos */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Créditos
+                                        Créditos *
                                     </label>
                                     {isEditing ? (
                                         <input
                                             type="number"
                                             min="0"
+                                            max="20"
                                             value={editData.creditos}
                                             onChange={(e) => handleInputChange('creditos', parseInt(e.target.value) || 0)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            placeholder="0"
                                         />
                                     ) : (
                                         <p className="text-gray-900">{course?.creditos || 0}</p>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Nota sobre campos obligatorios */}
+                            {isEditing && (
+                                <div className="mt-4 text-sm text-gray-500">
+                                    <p>* Campos obligatorios</p>
+                                    <p>• El código del curso no puede ser modificado</p>
+                                    <p>• Los créditos deben estar entre 0 y 20</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
