@@ -17,12 +17,14 @@ import Header from '../Components/Header';
 import Sidebar from '../Components/Sidebar';
 import SignUpForm from '../Components/SignUpForm';
 import apiService from '../services/apiService';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const StudentDetails = () => {
     // ===== HOOKS Y ESTADOS =====
     const { currentUser } = useAuth();
     const navigate = useNavigate();
-    
+
     // Estados locales
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ const StudentDetails = () => {
             navigate('/login');
             return;
         }
-        
+
         console.log('✅ Usuario autenticado:', currentUser);
         fetchStudentData();
         fetchCursosAsignados();
@@ -57,15 +59,15 @@ const StudentDetails = () => {
         try {
             console.log('🔍 Obteniendo datos del estudiante...');
             console.log('👤 Usuario actual:', currentUser);
-            
+
             // Intentar obtener datos desde la API
             if (currentUser?.carnet || currentUser?.id) {
                 const carnetEstudiante = currentUser.carnet || currentUser.id;
-                
+
                 try {
                     const response = await apiService.getEstudiante(carnetEstudiante);
                     console.log('📥 Respuesta de la API:', response);
-                    
+
                     if (response && response.success && response.data) {
                         // Mapear los campos de la respuesta de la API correctamente
                         const apiData = response.data;
@@ -74,7 +76,7 @@ const StudentDetails = () => {
                             nombre: apiData.nombre || apiData.nombreCompleto || apiData.name || '',
                             carnet: apiData.carnet || apiData.id || '',
                             email: apiData.email || `${apiData.carnet || apiData.id}@uvg.edu.gt`,
-                            
+
                             // Información académica 
                             carrera: apiData.carrera || '',
                             pensum: apiData.pensum || '',
@@ -82,15 +84,15 @@ const StudentDetails = () => {
                             grado: apiData.grado || '',
                             carga_maxima: apiData.carga_maxima || apiData.cargaMaxima || 0,
                             cursos_zona_minima: apiData.cursos_zona_minima || apiData.cursosZonaMinima || 0,
-                            
+
                             // Preferencias de aprendizaje
                             estilo_aprendizaje: apiData.estilo_aprendizaje || apiData.estiloAprendizaje || '',
                             estilo_clase: apiData.estilo_clase || apiData.estiloClase || '',
-                            
+
                             // Fechas
                             fecha_registro: apiData.fecha_registro || apiData.fechaRegistro || new Date().toISOString()
                         };
-                        
+
                         setStudent(studentData);
                         console.log('✅ Datos del estudiante obtenidos desde API:', studentData);
                         return;
@@ -100,10 +102,10 @@ const StudentDetails = () => {
                     setError(`Error al obtener datos: ${apiError.message}`);
                 }
             }
-            
+
             // Si no se pudieron obtener datos de la API, mostrar error
             setError('No se pudieron obtener los datos del estudiante desde la API');
-            
+
         } catch (err) {
             console.error('❌ Error obteniendo datos del estudiante:', err);
             setError(`Error general: ${err.message}`);
@@ -118,14 +120,14 @@ const StudentDetails = () => {
     const fetchCursosAsignados = async () => {
         try {
             console.log('📚 Obteniendo cursos asignados...');
-            
+
             if (currentUser?.carnet || currentUser?.id) {
                 const carnetEstudiante = currentUser.carnet || currentUser.id;
-                
+
                 try {
                     const response = await apiService.getCursosEstudiante(carnetEstudiante);
                     console.log('📚 Respuesta cursos API:', response);
-                    
+
                     if (response && response.success && response.data) {
                         const cursosData = Array.isArray(response.data) ? response.data : [];
                         setCursosAsignados(cursosData);
@@ -139,7 +141,7 @@ const StudentDetails = () => {
                     setCursosAsignados([]);
                 }
             }
-            
+
         } catch (err) {
             console.error('❌ Error obteniendo cursos asignados:', err);
             setCursosAsignados([]);
@@ -156,7 +158,7 @@ const StudentDetails = () => {
         try {
             console.log('💾 Actualizando datos del estudiante...');
             console.log('📝 Datos del formulario recibidos:', formData);
-            
+
             if (student?.carnet) {
                 // Transformar los datos al formato que espera la API
                 const apiData = {
@@ -182,7 +184,7 @@ const StudentDetails = () => {
 
                 const response = await apiService.updateEstudiante(student.carnet, apiData);
                 console.log('📥 Respuesta de actualización:', response);
-                
+
                 if (response && response.success) {
                     // Actualizar el estado local con los nuevos datos
                     // Usar la misma estructura que usamos al cargar los datos
@@ -190,7 +192,7 @@ const StudentDetails = () => {
                         // Mantener campos que no cambian
                         carnet: student.carnet,
                         fecha_registro: student.fecha_registro,
-                        
+
                         // Actualizar con los nuevos datos
                         nombre: apiData.nombre,
                         email: apiData.email,
@@ -203,23 +205,34 @@ const StudentDetails = () => {
                         estilo_aprendizaje: apiData.estilo_aprendizaje,
                         estilo_clase: apiData.estilo_clase
                     };
-                    
+
                     console.log('✅ Actualizando estado local con:', updatedStudent);
                     setStudent(updatedStudent);
-                    
+
                     setIsEditing(false);
                     console.log('✅ Estudiante actualizado exitosamente');
-                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Actualización Exitosa',
+                        text: 'Los datos del estudiante se han actualizado correctamente.',
+                    });
+
                     // Mostrar mensaje de éxito
                     setError(null);
-                    
+
                 } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+                        confirmButtonText: 'Entendido'
+                    });
                     throw new Error(response?.message || 'No se pudo actualizar el estudiante');
                 }
             } else {
                 throw new Error('No se encontró el carnet del estudiante');
             }
-            
+
         } catch (err) {
             console.error('❌ Error actualizando estudiante:', err);
             setError('Error al actualizar los datos: ' + err.message);
@@ -250,7 +263,7 @@ const StudentDetails = () => {
         const totalCreditos = cursosAsignados.reduce((sum, curso) => sum + (curso.creditos || 0), 0);
         const cursosActivos = cursosAsignados.filter(curso => curso.estado === 'Cursando').length;
         const cursosAprobados = cursosAsignados.filter(curso => curso.estado === 'Aprobado').length;
-        
+
         return {
             totalCreditos,
             cursosActivos,
@@ -342,17 +355,16 @@ const StudentDetails = () => {
                                 Mi Perfil Estudiantil
                             </h1>
                         </div>
-                        
+
                         {/* Botones de acción */}
                         <div className="flex space-x-3">
                             <button
                                 onClick={toggleEditMode}
                                 disabled={saving}
-                                className={`px-4 py-2 rounded-lg transition-colors duration-300 ${
-                                    isEditing 
-                                        ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                                        : 'bg-teal-600 text-white hover:bg-teal-700'
-                                } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`px-4 py-2 rounded-lg transition-colors duration-300 ${isEditing
+                                    ? 'bg-gray-600 text-white hover:bg-gray-700'
+                                    : 'bg-teal-600 text-white hover:bg-teal-700'
+                                    } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {isEditing ? 'Cancelar Edición' : 'Editar Perfil'}
                             </button>
@@ -406,7 +418,7 @@ const StudentDetails = () => {
                                     {/* Tarjeta de información personal */}
                                     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                                         <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Personal</h3>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {/* Nombre Completo */}
                                             <div>
@@ -437,7 +449,7 @@ const StudentDetails = () => {
                                     {/* Tarjeta de información académica */}
                                     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                                         <h3 className="text-xl font-semibold text-teal-700 mb-6">Información Académica</h3>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {/* Carrera */}
                                             <div>
@@ -494,7 +506,7 @@ const StudentDetails = () => {
                                     {/* Tarjeta de preferencias */}
                                     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                                         <h3 className="text-xl font-semibold text-teal-700 mb-6">Preferencias de Aprendizaje</h3>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {/* Estilo de Aprendizaje */}
                                             <div>
@@ -552,19 +564,18 @@ const StudentDetails = () => {
                                                                     {curso.profesor || curso.nombre_profesor || 'N/A'}
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                                        curso.estado === 'Cursando' || curso.estado === 'activo'
-                                                                            ? 'bg-green-100 text-green-800'
-                                                                            : curso.estado === 'Aprobado' || curso.estado === 'aprobado'
+                                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${curso.estado === 'Cursando' || curso.estado === 'activo'
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : curso.estado === 'Aprobado' || curso.estado === 'aprobado'
                                                                             ? 'bg-blue-100 text-blue-800'
                                                                             : 'bg-gray-100 text-gray-800'
-                                                                    }`}>
+                                                                        }`}>
                                                                         {curso.estado || 'Activo'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    {curso.nota !== null && curso.nota !== undefined 
-                                                                        ? curso.nota 
+                                                                    {curso.nota !== null && curso.nota !== undefined
+                                                                        ? curso.nota
                                                                         : 'En progreso'}
                                                                 </td>
                                                             </tr>

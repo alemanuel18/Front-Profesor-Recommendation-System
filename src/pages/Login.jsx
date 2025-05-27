@@ -17,6 +17,8 @@ import { useAuth } from '../context/AuthContext';
 import apiService from '../services/apiService';
 import SignUpForm from '../Components/SignUpForm';
 import UVG from '../assets/uvg.png';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const Login = () => {
     // ===== ESTADOS DEL COMPONENTE =====
@@ -45,15 +47,15 @@ const Login = () => {
         try {
             console.log('🔍 Verificando estado de la API...');
             const response = await apiService.healthCheck();
-            
+
             setApiStatus({
                 healthy: response && response.success,
                 checking: false,
                 message: response?.message || 'API disponible'
             });
-            
+
             console.log('✅ Estado de API verificado:', response);
-            
+
         } catch (error) {
             console.warn('⚠️ API no disponible:', error.message);
             setApiStatus({
@@ -74,7 +76,7 @@ const Login = () => {
 
         try {
             console.log('🔐 Intentando iniciar sesión...');
-            
+
             // Validación básica
             if (!email || !password) {
                 throw new Error('Por favor completa todos los campos');
@@ -87,16 +89,32 @@ const Login = () => {
 
             // Intentar autenticación
             const success = await login({ email, password });
-            
+
             if (success) {
                 console.log('✅ Inicio de sesión exitoso');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login exitoso',
+                    text: 'Welcome',
+                });
                 navigate('/');
             } else {
-                throw new Error('Credenciales inválidas');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Credenciales incorrectas',
+                    text: 'Credenciales inválidas',
+                    confirmButtonText: 'Intentar de nuevo'
+                });
             }
-            
+
         } catch (err) {
             console.error('❌ Error en inicio de sesión:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+                confirmButtonText: 'Entendido'
+            });
             setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
         } finally {
             setIsLoading(false);
@@ -107,174 +125,184 @@ const Login = () => {
      * Maneja el envío del formulario de registro
      */
     const handleSignUpSubmit = async (formData) => {
-    setIsLoading(true);
-    setError('');
+        setIsLoading(true);
+        setError('');
 
-    try {
-        console.log('📝 Intentando registrar usuario...');
-        
-        // Validación básica
-        if (!formData.email || !formData.password) {
-            throw new Error('Por favor completa todos los campos requeridos');
-        }
+        try {
+            console.log('📝 Intentando registrar usuario...');
 
-        // Validación de formato de email UVG
-        if (!formData.email.includes('@uvg.edu.gt')) {
-            throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
-        }
-
-        // LOG DETALLADO: Mostrar datos que se van a enviar
-        console.log('📤 Datos a enviar al backend:', {
-            ...formData,
-            password: '[OCULTA]' // No mostrar la contraseña en logs
-        });
-        
-        // Llamar a la API para registrar
-        console.log('🔄 Enviando petición a apiService.createEstudiante...');
-        const response = await apiService.createEstudiante(formData);
-        
-        // LOG DETALLADO: Mostrar respuesta completa del servidor
-        console.log('📥 Respuesta completa del servidor:', response);
-        console.log('📊 Tipo de respuesta:', typeof response);
-        console.log('✅ ¿Tiene propiedad success?', 'success' in response);
-        console.log('📋 Status de success:', response?.success);
-        console.log('💬 Mensaje del servidor:', response?.message);
-        
-        // Verificación más robusta de la respuesta
-        if (response) {
-            if (response.success === true) {
-                console.log('🎉 ¡Registro exitoso confirmado por el servidor!');
-                
-                // Si el servidor devuelve datos del usuario creado
-                if (response.data) {
-                    console.log('👤 Datos del usuario creado:', response.data);
-                }
-                
-                alert('✅ Registro exitoso! Ahora puedes iniciar sesión');
-                setIsSignUpMode(false);
-                setEmail(formData.email);
-                
-            } else {
-                // El servidor respondió pero con error
-                console.error('❌ El servidor reportó un error:', response.message || 'Error desconocido');
-                throw new Error(response.message || 'Error en el registro reportado por el servidor');
+            // Validación básica
+            if (!formData.email || !formData.password) {
+                throw new Error('Por favor completa todos los campos requeridos');
             }
-        } else {
-            // No hay respuesta del servidor
-            console.error('❌ No se recibió respuesta del servidor');
-            throw new Error('No se recibió respuesta del servidor');
-        }
-        
-    } catch (error) {
-        console.error('💥 Error completo capturado:', error);
-        console.error('📋 Tipo de error:', typeof error);
-        console.error('💬 Mensaje de error:', error.message);
-        console.error('📚 Stack trace:', error.stack);
-        
-        // Si el error viene de la respuesta HTTP
-        if (error.response) {
-            console.error('🌐 Error HTTP - Status:', error.response.status);
-            console.error('📄 Error HTTP - Data:', error.response.data);
-            setError(`Error del servidor: ${error.response.data?.message || error.message}`);
-        } else if (error.request) {
-            // Error de red o conectividad
-            console.error('🔌 Error de conectividad:', error.request);
-            setError('Error de conectividad. Verifica tu conexión a internet.');
-        } else {
-            // Error de validación o lógica
-            setError(error.message || 'Error desconocido al registrar');
-        }
-    } finally {
-        setIsLoading(false);
-    }
-};
 
-/**
- * Función adicional para verificar el estado de la API antes del registro
- */
-const checkApiBeforeSignup = async () => {
-    try {
-        console.log('🔍 Verificando estado de API antes del registro...');
-        const healthResponse = await apiService.healthCheck();
-        console.log('💚 Estado de API:', healthResponse);
-        return healthResponse?.success || false;
-    } catch (error) {
-        console.warn('⚠️ API health check failed:', error);
-        return false;
-    }
-};
+            // Validación de formato de email UVG
+            if (!formData.email.includes('@uvg.edu.gt')) {
+                throw new Error('Debe usar un correo institucional (@uvg.edu.gt)');
+            }
 
-/**
- * Función para validar que el email no esté ya registrado (opcional)
- */
-const checkEmailExists = async (email) => {
-    try {
-        // Si tienes un endpoint para verificar emails
-        const response = await apiService.checkEmailExists(email);
-        return response?.exists || false;
-    } catch (error) {
-        console.warn('⚠️ No se pudo verificar el email:', error);
-        return false;
-    }
-};
+            // LOG DETALLADO: Mostrar datos que se van a enviar
+            console.log('📤 Datos a enviar al backend:', {
+                ...formData,
+                password: '[OCULTA]' // No mostrar la contraseña en logs
+            });
 
-/**
- * Versión completa con pre-validaciones
- */
-const handleSignUpSubmitComplete = async (formData) => {
-    setIsLoading(true);
-    setError('');
+            // Llamar a la API para registrar
+            console.log('🔄 Enviando petición a apiService.createEstudiante...');
+            const response = await apiService.createEstudiante(formData);
 
-    try {
-        // 1. Verificar estado de la API
-        const apiHealthy = await checkApiBeforeSignup();
-        if (!apiHealthy) {
-            throw new Error('El servidor no está disponible en este momento');
+            // LOG DETALLADO: Mostrar respuesta completa del servidor
+            console.log('📥 Respuesta completa del servidor:', response);
+            console.log('📊 Tipo de respuesta:', typeof response);
+            console.log('✅ ¿Tiene propiedad success?', 'success' in response);
+            console.log('📋 Status de success:', response?.success);
+            console.log('💬 Mensaje del servidor:', response?.message);
+
+            // Verificación más robusta de la respuesta
+            if (response) {
+                if (response.success === true) {
+                    console.log('🎉 ¡Registro exitoso confirmado por el servidor!');
+
+                    // Si el servidor devuelve datos del usuario creado
+                    if (response.data) {
+                        console.log('👤 Datos del usuario creado:', response.data);
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Signup exitoso',
+                        text: 'Ahora puedes iniciar sesión',
+                    });
+                    setIsSignUpMode(false);
+                    setEmail(formData.email);
+
+                } else {
+                    // El servidor respondió pero con error
+                    console.error('❌ El servidor reportó un error:', response.message || 'Error desconocido');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+                        confirmButtonText: 'Entendido'
+                    });
+                    throw new Error(response.message || 'Error en el registro reportado por el servidor');
+                }
+            } else {
+                // No hay respuesta del servidor
+                console.error('❌ No se recibió respuesta del servidor');
+                throw new Error('No se recibió respuesta del servidor');
+            }
+
+        } catch (error) {
+            console.error('💥 Error completo capturado:', error);
+            console.error('📋 Tipo de error:', typeof error);
+            console.error('💬 Mensaje de error:', error.message);
+            console.error('📚 Stack trace:', error.stack);
+
+            // Si el error viene de la respuesta HTTP
+            if (error.response) {
+                console.error('🌐 Error HTTP - Status:', error.response.status);
+                console.error('📄 Error HTTP - Data:', error.response.data);
+                setError(`Error del servidor: ${error.response.data?.message || error.message}`);
+            } else if (error.request) {
+                // Error de red o conectividad
+                console.error('🔌 Error de conectividad:', error.request);
+                setError('Error de conectividad. Verifica tu conexión a internet.');
+            } else {
+                // Error de validación o lógica
+                setError(error.message || 'Error desconocido al registrar');
+            }
+        } finally {
+            setIsLoading(false);
         }
+    };
 
-        // 2. Verificar si el email ya existe (opcional)
-        // const emailExists = await checkEmailExists(formData.email);
-        // if (emailExists) {
-        //     throw new Error('Este correo electrónico ya está registrado');
-        // }
+    /**
+     * Función adicional para verificar el estado de la API antes del registro
+     */
+    const checkApiBeforeSignup = async () => {
+        try {
+            console.log('🔍 Verificando estado de API antes del registro...');
+            const healthResponse = await apiService.healthCheck();
+            console.log('💚 Estado de API:', healthResponse);
+            return healthResponse?.success || false;
+        } catch (error) {
+            console.warn('⚠️ API health check failed:', error);
+            return false;
+        }
+    };
 
-        // 3. Proceder con el registro
-        console.log('📝 Iniciando proceso de registro...');
-        console.log('📤 Datos finales a enviar:', {
-            ...formData,
-            password: '[OCULTA]'
-        });
-        
-        const response = await apiService.createEstudiante(formData);
-        
-        // 4. Validación exhaustiva de respuesta
-        console.log('📥 Respuesta del servidor:', response);
-        
-        if (!response) {
-            throw new Error('No se recibió respuesta del servidor');
+    /**
+     * Función para validar que el email no esté ya registrado (opcional)
+     */
+    const checkEmailExists = async (email) => {
+        try {
+            // Si tienes un endpoint para verificar emails
+            const response = await apiService.checkEmailExists(email);
+            return response?.exists || false;
+        } catch (error) {
+            console.warn('⚠️ No se pudo verificar el email:', error);
+            return false;
         }
-        
-        if (response.success !== true) {
-            throw new Error(response.message || 'Error desconocido del servidor');
+    };
+
+    /**
+     * Versión completa con pre-validaciones
+     */
+    const handleSignUpSubmitComplete = async (formData) => {
+        setIsLoading(true);
+        setError('');
+
+        try {
+            // 1. Verificar estado de la API
+            const apiHealthy = await checkApiBeforeSignup();
+            if (!apiHealthy) {
+                throw new Error('El servidor no está disponible en este momento');
+            }
+
+            // 2. Verificar si el email ya existe (opcional)
+            // const emailExists = await checkEmailExists(formData.email);
+            // if (emailExists) {
+            //     throw new Error('Este correo electrónico ya está registrado');
+            // }
+
+            // 3. Proceder con el registro
+            console.log('📝 Iniciando proceso de registro...');
+            console.log('📤 Datos finales a enviar:', {
+                ...formData,
+                password: '[OCULTA]'
+            });
+
+            const response = await apiService.createEstudiante(formData);
+
+            // 4. Validación exhaustiva de respuesta
+            console.log('📥 Respuesta del servidor:', response);
+
+            if (!response) {
+                throw new Error('No se recibió respuesta del servidor');
+            }
+
+            if (response.success !== true) {
+                throw new Error(response.message || 'Error desconocido del servidor');
+            }
+
+            // 5. Registro exitoso
+            console.log('🎉 ¡Registro completado exitosamente!');
+            if (response.data) {
+                console.log('👤 Usuario creado:', response.data);
+            }
+
+            alert('✅ ¡Registro exitoso! Ahora puedes iniciar sesión');
+            setIsSignUpMode(false);
+            setEmail(formData.email);
+
+        } catch (error) {
+            console.error('💥 Error en el registro:', error);
+            setError(error.message || 'Error al registrar usuario');
+        } finally {
+            setIsLoading(false);
         }
-        
-        // 5. Registro exitoso
-        console.log('🎉 ¡Registro completado exitosamente!');
-        if (response.data) {
-            console.log('👤 Usuario creado:', response.data);
-        }
-        
-        alert('✅ ¡Registro exitoso! Ahora puedes iniciar sesión');
-        setIsSignUpMode(false);
-        setEmail(formData.email);
-        
-    } catch (error) {
-        console.error('💥 Error en el registro:', error);
-        setError(error.message || 'Error al registrar usuario');
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
     /**
      * Maneja el inicio de sesión de demostración
@@ -297,7 +325,7 @@ const handleSignUpSubmitComplete = async (formData) => {
         try {
             const credentials = demoCredentials[userType];
             const success = await login(credentials);
-            
+
             if (success) {
                 navigate('/');
             } else {
@@ -328,10 +356,10 @@ const handleSignUpSubmitComplete = async (formData) => {
                 <div className={`w-full mx-auto ${isSignUpMode ? 'max-w-2xl' : 'max-w-sm lg:w-96'}`}>
                     {/* Logo de la UVG */}
                     <div className="flex justify-center mb-6">
-                        <img 
-                            src={UVG} 
-                            alt="UVG Logo" 
-                            className="h-24 filter invert-0 brightness-0 sepia saturate-100 hue-rotate-[150deg] contrast-100" 
+                        <img
+                            src={UVG}
+                            alt="UVG Logo"
+                            className="h-24 filter invert-0 brightness-0 sepia saturate-100 hue-rotate-[150deg] contrast-100"
                         />
                     </div>
 
@@ -353,11 +381,10 @@ const handleSignUpSubmitComplete = async (formData) => {
                                 <span className="text-sm text-gray-600">Verificando sistema...</span>
                             </div>
                         ) : (
-                            <div className={`p-3 rounded-md flex items-center ${
-                                apiStatus.healthy 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : 'bg-yellow-100 text-yellow-700'
-                            }`}>
+                            <div className={`p-3 rounded-md flex items-center ${apiStatus.healthy
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                                }`}>
                                 <div className="flex-shrink-0 mr-2">
                                     {apiStatus.healthy ? (
                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -437,9 +464,8 @@ const handleSignUpSubmitComplete = async (formData) => {
                                     <button
                                         type="submit"
                                         disabled={isLoading}
-                                        className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 transition-colors ${
-                                            isLoading ? 'opacity-70 cursor-not-allowed' : ''
-                                        }`}
+                                        className={`flex w-full justify-center rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                                            }`}
                                     >
                                         {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                                     </button>
@@ -454,8 +480,8 @@ const handleSignUpSubmitComplete = async (formData) => {
                                 onClick={toggleMode}
                                 className="text-sm text-teal-600 hover:text-teal-500 font-medium transition-colors"
                             >
-                                {isSignUpMode 
-                                    ? '¿Ya tienes cuenta? Inicia sesión' 
+                                {isSignUpMode
+                                    ? '¿Ya tienes cuenta? Inicia sesión'
                                     : '¿No tienes cuenta? Regístrate aquí'
                                 }
                             </button>
@@ -469,7 +495,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                         Cuentas de demostración
                                     </span>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
@@ -482,7 +508,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                         </svg>
                                         Estudiante
                                     </button>
-                                    
+
                                     <button
                                         type="button"
                                         onClick={() => handleDemoLogin('admin')}
@@ -507,14 +533,14 @@ const handleSignUpSubmitComplete = async (formData) => {
                 {/* Elementos de fondo animados */}
                 <div className="absolute inset-0">
                     {/* Círculos flotantes de fondo */}
-                    <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
-                    <div className="absolute top-32 right-16 w-12 h-12 bg-white bg-opacity-5 rounded-full animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
-                    <div className="absolute bottom-20 left-16 w-16 h-16 bg-emerald-400 bg-opacity-20 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
-                    <div className="absolute top-1/2 right-8 w-8 h-8 bg-teal-300 bg-opacity-15 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
-                    
+                    <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+                    <div className="absolute top-32 right-16 w-12 h-12 bg-white bg-opacity-5 rounded-full animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
+                    <div className="absolute bottom-20 left-16 w-16 h-16 bg-emerald-400 bg-opacity-20 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+                    <div className="absolute top-1/2 right-8 w-8 h-8 bg-teal-300 bg-opacity-15 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+
                     {/* Líneas decorativas */}
                     <div className="absolute top-0 right-0 w-1 h-32 bg-gradient-to-b from-transparent via-white to-transparent opacity-20 animate-pulse"></div>
-                    <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse" style={{animationDelay: '1s'}}></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
                 </div>
 
                 <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -525,7 +551,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                 {isSignUpMode ? '¡Únete a nosotros!' : 'El poder de los Grafos'}
                             </h1>
                             <p className="text-xl mb-8 text-teal-100 font-light tracking-wide">
-                                
+
                             </p>
                         </div>
 
@@ -554,12 +580,12 @@ const handleSignUpSubmitComplete = async (formData) => {
                                 <h3 className="text-2xl font-bold mb-6 text-teal-600">
                                     {isSignUpMode ? 'Beneficios del Sistema' : 'Características del Sistema'}
                                 </h3>
-                                
+
                                 {/* Lista de características con animaciones escalonadas */}
                                 <div className="space-y-4">
                                     {isSignUpMode ? (
                                         <>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.1s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.1s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -567,7 +593,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                                 </div>
                                                 <span className="text-teal-600 font-medium">Profesores adaptados a tu estilo</span>
                                             </div>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.2s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.2s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -575,7 +601,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                                 </div>
                                                 <span className="text-teal-600 font-medium">Optimización de tu carga académica</span>
                                             </div>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.3s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.3s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -586,7 +612,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                         </>
                                     ) : (
                                         <>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.1s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.1s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -594,7 +620,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                                 </div>
                                                 <span className="text-teal-600 font-medium">Recomendaciones personalizadas</span>
                                             </div>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.2s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.2s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -602,7 +628,7 @@ const handleSignUpSubmitComplete = async (formData) => {
                                                 </div>
                                                 <span className="text-teal-600 font-medium">Análisis de compatibilidad</span>
                                             </div>
-                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{animationDelay: '0.3s'}}>
+                                            <div className="flex items-center text-left group transform transition-all duration-300 hover:translate-x-2" style={{ animationDelay: '0.3s' }}>
                                                 <div className="flex-shrink-0 w-8 h-8 bg-teal-400 bg-opacity-20 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-40 transition-all duration-300">
                                                     <svg className="w-4 h-4 text-teal-300" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
