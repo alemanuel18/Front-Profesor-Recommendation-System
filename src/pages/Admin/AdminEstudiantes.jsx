@@ -106,42 +106,44 @@ const AdminEstudiantes = () => {
     setShowDeleteModal(true);
   };
 
-  /**
-   * Elimina un estudiante
-   */
-  const handleDeleteStudent = async () => {
+/**
+ * Elimina un estudiante
+ */
+const handleDeleteStudent = async () => {
     if (!studentToDelete) return;
 
     const carnetEstudiante = studentToDelete.carnet;
-    
+
     console.log('🔍 Intentando eliminar estudiante:', carnetEstudiante);
-    
+
     if (!carnetEstudiante) {
-      console.error('❌ No se pudo obtener el carnet del estudiante');
-      alert('Error: No se pudo identificar el estudiante a eliminar.');
-      return;
+        console.error('❌ No se pudo obtener el carnet del estudiante');
+        alert('Error: No se pudo identificar el estudiante a eliminar.');
+        return;
     }
 
     setIsSubmitting(true);
     try {
-      console.log('🌐 Enviando petición de eliminación para:', carnetEstudiante);
-      const response = await apiService.deleteEstudiante(carnetEstudiante);
-      
-      if (response && response.success) {
+        console.log('🌐 Enviando petición de eliminación para:', carnetEstudiante);
+        const response = await apiService.deleteEstudiante(carnetEstudiante);
+        
+        // Verificar la respuesta de manera más flexible
+        if (response && (response.success || response.status === 200 || response.status === 204)) {
         console.log('✅ Estudiante eliminado exitosamente');
-        await fetchStudents(); // Recargar lista
+        // Forzar actualización del estado
+        setStudents(prev => prev.filter(s => s.carnet !== carnetEstudiante));
         setShowDeleteModal(false);
         setStudentToDelete(null);
-      } else {
-        throw new Error('Error al eliminar el estudiante');
-      }
+        } else {
+        throw new Error(response?.message || 'Error al eliminar el estudiante');
+        }
     } catch (error) {
-      console.error('❌ Error eliminando estudiante:', error);
-      alert(`Error al eliminar el estudiante: ${error.message}`);
+        console.error('❌ Error eliminando estudiante:', error);
+        alert(`Error al eliminar el estudiante: ${error.message || 'Error desconocido'}`);
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
-  };
+};
 
   /**
    * Maneja los cambios en el formulario
