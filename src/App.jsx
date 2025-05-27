@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Materias from './pages/Materias';
 import Seleccion_Profesores from './pages/Seleccion_Profesores';
 import Login from './pages/Login';
+import AdminEstudiantes from './pages/Admin/AdminEstudiantes';
 import StudentDetails from './pages/StudentDetails';
 import AdminProfessors from './pages/Admin/AdminProfessors';
 import ProfessorDetails from './pages/ProfessorDetails';
@@ -53,6 +54,13 @@ function App() {
               } />
               
               {/* Rutas protegidas para administradores */}
+
+              <Route path="/admin/estudiantes" element={
+                <AdminProtectedRoute>
+                  <AdminEstudiantes />
+                </AdminProtectedRoute>
+              } />
+
               <Route path="/admin/professors" element={
                 <AdminProtectedRoute>
                   <AdminProfessors />

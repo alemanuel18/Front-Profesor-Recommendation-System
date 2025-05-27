@@ -52,6 +52,14 @@ const AdminSidebar = () => {
         {/* Menú de navegación */}
         <nav className="space-y-1">
 
+          {/* Gestión de Estudiantes */}
+          <Link
+            to="/admin/estudiantes"
+            className={`flex items-center px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors ${isActive('/admin/estudiantes')}`}
+          >
+            <span>Estudiantes</span>
+          </Link>
+
           {/* Gestión de Profesores */}
           <Link
             to="/admin/professors"
@@ -67,7 +75,6 @@ const AdminSidebar = () => {
           >
             <span>Cursos</span>
           </Link>
-
         </nav>
       </div>
     </aside>
