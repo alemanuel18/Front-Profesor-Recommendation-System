@@ -69,7 +69,27 @@ const AdminProfessors = () => {
   const handleProfessorSelect = (professor) => {
     const nombreProfesor = typeof professor === 'string' ? professor : (professor.nombre || professor.name);
     console.log('🔍 Navegando a detalles del profesor:', nombreProfesor);
-    navigate(`/admin/professors/${nombreProfesor}`);
+    
+    // Obtener los cursos del profesor antes de navegar
+    apiService.getCursosProfesor(nombreProfesor)
+      .then(response => {
+        navigate(`/admin/professors/${nombreProfesor}`, {
+          state: {
+            profesorData: professor,
+            cursos: response.data.cursos || [] // Asegúrate de que la respuesta tenga esta estructura
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Error obteniendo cursos del profesor:', error);
+        // Navegar igual pero sin cursos
+        navigate(`/admin/professors/${nombreProfesor}`, {
+          state: {
+            profesorData: professor,
+            cursos: []
+          }
+        });
+      });
   };
 
   /**

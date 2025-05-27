@@ -349,6 +349,22 @@ class ApiService {
       };
     }
   }
+
+  // ===== GESTIÓN DE CURSOS PARA PROFESORES =====
+
+  // Asignar curso a profesor (método corregido)
+  async asignarCursoProfesor(nombreProfesor, codigoCurso) {
+      return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos/${encodeURIComponent(codigoCurso)}`, {
+          method: 'POST',
+      });
+  }
+
+  // Remover curso de profesor (método corregido)
+  async removeCourseFromProfesor(nombreProfesor, codigoCurso) {
+    return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos/${encodeURIComponent(codigoCurso)}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Exportar una instancia única del servicio
