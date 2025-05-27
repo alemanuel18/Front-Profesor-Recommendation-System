@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import Sidebar from '../Components/Sidebar';
 import AdminSidebar from '../Components/Admin/AdminSidebar';
 import Header from '../Components/Header';
+import TimesCourseModal from '../Components/TimesCourseModal';
 import { useNavigate } from 'react-router-dom';
 import { useStudent } from '../context/StudentContext';
 import apiService from '../services/apiService';
@@ -29,6 +30,8 @@ const CourseList = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showTimesModal, setShowTimesModal] = useState(false);
   const [filters, setFilters] = useState({
     departamento: '',
     searchTerm: ''
@@ -113,46 +116,16 @@ const CourseList = () => {
   };
 
   /**
-   * Datos mock de cursos como fallback
+   * Función auxiliar para navegar al curso
    */
-  const getMockCourses = async () => {
-    return [
-      {
-        codigo: 'MAT101',
-        nombre: 'Cálculo 1',
-        departamento: 'Matemáticas',
-        creditos: 4,
-        descripcion: 'Introducción al cálculo diferencial e integral'
-      },
-      {
-        codigo: 'MAT102',
-        nombre: 'Álgebra Lineal 1',
-        departamento: 'Matemáticas',
-        creditos: 4,
-        descripcion: 'Conceptos fundamentales de álgebra lineal'
-      },
-      {
-        codigo: 'EST101',
-        nombre: 'Estadística 1',
-        departamento: 'Estadística',
-        creditos: 3,
-        descripcion: 'Fundamentos de estadística descriptiva e inferencial'
-      },
-      {
-        codigo: 'MAT201',
-        nombre: 'Cálculo 2',
-        departamento: 'Matemáticas',
-        creditos: 4,
-        descripcion: 'Cálculo multivariable y series'
-      },
-      {
-        codigo: 'CC101',
-        nombre: 'Programación 1',
-        departamento: 'Ciencias de la Computación',
-        creditos: 4,
-        descripcion: 'Introducción a la programación'
+  const navigateToCourse = (course) => {
+    navigate(`/cursos/${course.codigo}`, {
+      state: { 
+        courseName: course.nombre,
+        courseCode: course.codigo,
+        courseData: course
       }
-    ];
+    });
   };
 
   /**
@@ -210,24 +183,34 @@ const CourseList = () => {
     try {
       // Opcional: Obtener información adicional del curso antes de navegar
       console.log(`📚 Seleccionado curso: ${course.codigo} - ${course.nombre}`);
-      
-      navigate(`/cursos/${course.codigo}`, {
-        state: { 
-          courseName: course.nombre,
-          courseCode: course.codigo,
-          courseData: course
-        }
-      });
+
+      // Establecer el curso seleccionado y mostrar el modal
+      setSelectedCourse(course);
+      setShowTimesModal(true);
     } catch (err) {
       console.error('Error al seleccionar curso:', err);
-      // Navegar de todos modos con los datos disponibles
-      navigate(`/cursos/${course.codigo}`, {
-        state: { 
-          courseName: course.nombre,
-          courseCode: course.codigo,
-          courseData: course
-        }
+    }
+  };
+
+  /**
+   * Maneja la confirmación del número de veces cursado
+   */
+  const handleTimesConfirmed = async (times) => {
+    setShowTimesModal(false);
+    
+    try {
+      // Actualizar el número de veces que ha cursado el curso
+      await apiService.updateEstudiante(currentUser.carnet, {
+        veces_curso: times
       });
+      
+      // Ahora sí navegar al curso
+      navigateToCourse(selectedCourse);
+    } catch (error) {
+      console.error('Error al actualizar veces_curso:', error);
+      // Navegar de todas formas, mostrando error
+      alert('No se pudo guardar el número de veces cursado, pero puedes continuar.');
+      navigateToCourse(selectedCourse);
     }
   };
 
@@ -485,6 +468,14 @@ const CourseList = () => {
           )}
         </div>
       </div>
+      
+      {/* Modal de número de veces cursado */}
+      <TimesCourseModal
+        isOpen={showTimesModal}
+        onClose={() => setShowTimesModal(false)}
+        onConfirm={handleTimesConfirmed}
+        course={selectedCourse}
+      />
     </div>
   );
 };
