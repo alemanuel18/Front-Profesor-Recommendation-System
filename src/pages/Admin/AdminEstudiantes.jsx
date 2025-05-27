@@ -21,6 +21,9 @@ import Header from '../../Components/Header';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
 
 const AdminEstudiantes = () => {
   // ===== HOOKS Y CONTEXTO =====
@@ -64,7 +67,7 @@ const AdminEstudiantes = () => {
   const handleStudentSelect = (student) => {
     const nombreEstudiante = typeof student === 'string' ? student : (student.nombre || student.name);
     console.log('🔍 Navegando a detalles del estudiante:', nombreEstudiante);
-    
+
     navigate(`/admin/students/${nombreEstudiante}`, {
       state: {
         studentData: student
@@ -77,22 +80,22 @@ const AdminEstudiantes = () => {
    */
   const handleDeleteClick = (student) => {
     console.log('🗑️ Estudiante seleccionado para eliminar:', student);
-    
+
     const studentData = {
       ...student,
       nombre: student.nombre || student.name,
       name: student.name || student.nombre
     };
-    
+
     console.log('📝 Datos del estudiante normalizados:', studentData);
     setStudentToDelete(studentData);
     setShowDeleteModal(true);
   };
 
-/**
- * Elimina un estudiante
- */
-const handleDeleteStudent = async () => {
+  /**
+   * Elimina un estudiante
+   */
+  const handleDeleteStudent = async () => {
     if (!studentToDelete) return;
 
     const carnetEstudiante = studentToDelete.carnet;
@@ -100,57 +103,73 @@ const handleDeleteStudent = async () => {
     console.log('🔍 Intentando eliminar estudiante:', carnetEstudiante);
 
     if (!carnetEstudiante) {
-        console.error('❌ No se pudo obtener el carnet del estudiante');
-        alert('Error: No se pudo identificar el estudiante a eliminar.');
-        return;
+      console.error('❌ No se pudo obtener el carnet del estudiante');
+      Swal.fire({
+        icon: 'error',
+        title: 'Credenciales incorrectas',
+        text: 'Error: No se pudo identificar el estudiante a eliminar.',
+        confirmButtonText: 'Intentar de nuevo'
+      });
+      return;
     }
 
     setIsSubmitting(true);
     try {
-        console.log('🌐 Enviando petición de eliminación para:', carnetEstudiante);
-        const response = await apiService.deleteEstudiante(carnetEstudiante);
-        
-        // Verificar la respuesta de manera más flexible
-        if (response && (response.success || response.status === 200 || response.status === 204)) {
+      console.log('🌐 Enviando petición de eliminación para:', carnetEstudiante);
+      const response = await apiService.deleteEstudiante(carnetEstudiante);
+
+      // Verificar la respuesta de manera más flexible
+      if (response && (response.success || response.status === 200 || response.status === 204)) {
         console.log('✅ Estudiante eliminado exitosamente');
+        Swal.fire({
+          icon: 'success',
+          title: 'Estudiante eliminado',
+          text: 'Estudiante eliminado exitosamente',
+        });
         // Forzar actualización del estado
         setStudents(prev => prev.filter(s => s.carnet !== carnetEstudiante));
         setShowDeleteModal(false);
         setStudentToDelete(null);
-        } else {
+      } else {
         throw new Error(response?.message || 'Error al eliminar el estudiante');
-        }
+      }
     } catch (error) {
-        console.error('❌ Error eliminando estudiante:', error);
-        alert(`Error al eliminar el estudiante: ${error.message || 'Error desconocido'}`);
+      console.error('❌ Error eliminando estudiante:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al eliminar estudiante',
+        text: 'Error: No se pudo eliminar al estudiante a eliminar.',
+        confirmButtonText: 'Intentar de nuevo'
+      });
+      alert(`Error al eliminar el estudiante: ${error.message || 'Error desconocido'}`);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-};
+  };
 
   // ===== RENDERIZADO CONDICIONAL =====
-    if (loading) {
+  if (loading) {
     return (
-        <div className="flex">
+      <div className="flex">
         <AdminSidebar />
         <div className="ml-64 flex-1 w-full">
-            <Header />
-            <div className="flex items-center justify-center h-64">
+          <Header />
+          <div className="flex items-center justify-center h-64">
             <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
+          </div>
         </div>
-        </div>
+      </div>
     );
-}
+  }
 
   // ===== RENDERIZADO PRINCIPAL =====
   return (
     <div className="flex">
       <AdminSidebar />
-      
+
       <div className="ml-64 flex-1 w-full">
         <Header />
-        
+
         <div className="p-8">
           {/* Título */}
           <div className="flex justify-between items-center mb-10">
@@ -179,7 +198,7 @@ const handleDeleteStudent = async () => {
                   <th scope="col" className="py-3 px-6">Acciones</th>
                 </tr>
               </thead>
-              
+
               <tbody>
                 {students && students.length > 0 ? (
                   students.map((student, index) => {
@@ -188,7 +207,7 @@ const handleDeleteStudent = async () => {
                         {/* Imagen */}
                         <td className="py-4 px-6">
                           <div className="relative">
-                            <img 
+                            <img
                               className="w-10 h-10 rounded-full object-cover bg-gray-200"
                               src="/images/student-avatar.jpg"
                               alt={`Avatar de ${student.nombre || 'Estudiante'}`}
@@ -217,12 +236,12 @@ const handleDeleteStudent = async () => {
                         <td className="py-4 px-6">
                           {student.carnet || 'N/A'}
                         </td>
-                        
+
                         {/* Carrera */}
                         <td className="py-4 px-6">
                           {student.carrera || 'N/A'}
                         </td>
-                        
+
                         {/* Promedio */}
                         <td className="py-4 px-6">
                           <div className="flex items-center">
@@ -231,7 +250,7 @@ const handleDeleteStudent = async () => {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Acciones */}
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
@@ -274,7 +293,7 @@ const handleDeleteStudent = async () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Confirmar Eliminación</h3>
               <p className="text-sm text-gray-500 mb-6">
-                ¿Estás seguro de que deseas eliminar al estudiante <strong>{studentToDelete?.nombre || studentToDelete?.name}</strong>? 
+                ¿Estás seguro de que deseas eliminar al estudiante <strong>{studentToDelete?.nombre || studentToDelete?.name}</strong>?
                 Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-center space-x-3">
@@ -288,9 +307,8 @@ const handleDeleteStudent = async () => {
                 <button
                   onClick={handleDeleteStudent}
                   disabled={isSubmitting}
-                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isSubmitting ? 'Eliminando...' : 'Eliminar'}
                 </button>
