@@ -1,4 +1,13 @@
-# Front-Profesor-Recommendation-System
+# 🎓 Front-End del Sistema de Recomendación de Profesores
+
+Este proyecto corresponde al **frontend** de un sistema de recomendación de profesores universitarios, desarrollado con React. Permite a los estudiantes recibir sugerencias personalizadas de profesores con base en criterios como experiencia, calificaciones y áreas de especialidad.
+
+## 🧠 Características del Proyecto
+
+- Interfaz intuitiva para estudiantes.
+- Visualización clara de los profesores recomendados.
+- Comunicación fluida con el backend basado en grados y relaciones.
+- Uso de rutas protegidas y autenticación.
 
 ## Instalar node.js
 
