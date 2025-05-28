@@ -1,6 +1,6 @@
 # 🎓 Front-End del Sistema de Recomendación de Profesores
 
-Este proyecto corresponde al **frontend** de un sistema de recomendación de profesores universitarios, desarrollado con React. Permite a los estudiantes recibir sugerencias personalizadas de profesores con base en criterios como experiencia, calificaciones y áreas de especialidad.
+Este proyecto corresponde al **frontend** de un sistema de recomendación de profesores universitarios, desarrollado con React y conectado a su respectivo backend utilizando FastAPI. Permite a los estudiantes recibir sugerencias personalizadas de profesores con base en criterios como experiencia, calificaciones y áreas de especialidad.
 
 ## 🧠 Características del Proyecto
 
@@ -34,12 +34,19 @@ npm install
 npm run dev
 ```
 
-## Iniciar Sesión en Login (Estudiante)
+## 🧱 Modelo de Datos
+Este frontend interactúa con un backend que modela entidades como:
 
-- Email: estudiante@uvg.edu.gt
-- Contraseña: password123
+- Estudiante 👨‍🎓
+- Profesor 👨‍🏫
+- Curso 📚
+- Relaciones entre estudiantes, profesores y cursos.
 
-## Iniciar Sesión en Login (Admin)
+Las recomendaciones se basan en los grados y características de estos nodos en la base de datos.
 
-- Email: admin@uvg.edu.gt
-- Contraseña: admin123
+## 🤖 Algoritmo de Recomendación
+El sistema utiliza un algoritmo basado en grafos y pesos personalizados para:
+
+- Evaluar compatibilidad estudiante-profesor.
+- Sugerir al estudiante los profesores con mayor afinidad según sus preferencias y rendimiento académico.
+- Consultar relaciones desde la base de datos Neo4j mediante una API.
