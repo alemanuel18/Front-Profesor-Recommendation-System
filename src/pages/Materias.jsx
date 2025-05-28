@@ -147,8 +147,7 @@ const CourseList = () => {
       const searchLower = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(course => 
         course.nombre?.toLowerCase().includes(searchLower) ||
-        course.codigo?.toLowerCase().includes(searchLower) ||
-        course.descripcion?.toLowerCase().includes(searchLower)
+        course.codigo?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -404,10 +403,6 @@ const CourseList = () => {
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {course.nombre}
                   </h3>
-                  
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {course.descripcion || 'Descripción no disponible'}
-                  </p>
                   
                   {/* Departamento */}
                   <div className="flex items-center mb-4">

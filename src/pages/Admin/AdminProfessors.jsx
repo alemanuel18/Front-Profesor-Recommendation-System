@@ -69,29 +69,50 @@ const AdminProfessors = () => {
    * Maneja la navegación a los detalles de un profesor
    */
   const handleProfessorSelect = (professor) => {
-    const nombreProfesor = typeof professor === 'string' ? professor : (professor.nombre || professor.name);
-    console.log('🔍 Navegando a detalles del profesor:', nombreProfesor);
+    // Asegurarse de obtener el nombre correctamente
+    const nombreProfesor = typeof professor === 'string' 
+        ? professor 
+        : (professor.nombre || professor.name);
+    
+    console.log('Nombre del profesor a buscar:', nombreProfesor);
+    
+    // Verificar que el nombre no esté vacío
+    if (!nombreProfesor) {
+        console.error('Nombre del profesor no válido');
+        return;
+    }
 
-    // Obtener los cursos del profesor antes de navegar
-    apiService.getCursosProfesor(nombreProfesor)
-      .then(response => {
-        navigate(`/admin/professors/${nombreProfesor}`, {
-          state: {
-            profesorData: professor,
-            cursos: response.data.cursos || [] // Asegúrate de que la respuesta tenga esta estructura
-          }
+    // NO hacer encodeURIComponent aquí - apiService ya lo hace
+    // Pasar el nombre sin encodear a apiService
+    apiService.getProfesor(nombreProfesor) // ✅ Nombre sin encodear
+        .then(profesorData => {
+            // Verificar que se recibieron datos
+            if (!profesorData) {
+                throw new Error('No se recibieron datos del profesor');
+            }
+            
+            // Obtener cursos del profesor (también sin encodear)
+            return apiService.getCursosProfesor(nombreProfesor) // ✅ Nombre sin encodear
+                .then(cursosResponse => {
+                    // Solo para la navegación hacer el encoding UNA vez
+                    const nombreCodificado = encodeURIComponent(nombreProfesor);
+                    navigate(`/admin/professors/${nombreCodificado}`, {
+                        state: {
+                            profesorData: profesorData,
+                            cursos: cursosResponse?.data?.cursos || []
+                        }
+                    });
+                });
+        })
+        .catch(error => {
+            console.error('Error obteniendo datos del profesor:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo cargar la información del profesor',
+                confirmButtonText: 'OK'
+            });
         });
-      })
-      .catch(error => {
-        console.error('Error obteniendo cursos del profesor:', error);
-        // Navegar igual pero sin cursos
-        navigate(`/admin/professors/${nombreProfesor}`, {
-          state: {
-            profesorData: professor,
-            cursos: []
-          }
-        });
-      });
   };
 
   /**
@@ -127,7 +148,7 @@ const AdminProfessors = () => {
       console.error('❌ No se pudo obtener el nombre del profesor');
       Swal.fire({
         icon: 'error',
-        title: 'Credenciales incorrectas',
+        title: 'Error',
         text: 'Error: No se pudo identificar al profesor a eliminar.',
         confirmButtonText: 'Intentar de nuevo'
       });
@@ -137,14 +158,16 @@ const AdminProfessors = () => {
     setIsSubmitting(true);
     try {
       console.log('🌐 Enviando petición de eliminación para:', nombreProfesor);
+      
+      // ✅ Pasar el nombre SIN encodear - apiService ya lo hace
       const response = await apiService.deleteProfesor(nombreProfesor);
 
       if (response && response.success) {
         console.log('✅ Profesor eliminado exitosamente');
         Swal.fire({
           icon: 'success',
-          title: 'Estudiante eliminado',
-          text: 'Estudiante eliminado exitosamente',
+          title: 'Profesor eliminado',
+          text: 'Profesor eliminado exitosamente',
         });
         await fetchProfessors(); // Recargar lista
         setShowDeleteModal(false);
@@ -160,7 +183,6 @@ const AdminProfessors = () => {
         text: 'Error: No se pudo eliminar al profesor.',
         confirmButtonText: 'Intentar de nuevo'
       });
-      alert(`Error al eliminar el profesor: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -527,9 +549,9 @@ const AdminProfessors = () => {
                         }`}
                     >
                       <option value="">Seleccionar estilo</option>
-                      <option value="visual">Visual</option>
-                      <option value="práctico">Práctico</option>
-                      <option value="teórico">Teórico</option>
+                      <option value="mixto">Mixto</option>
+                      <option value="practico">Práctico</option>
+                      <option value="teorico">Teórico</option>
                     </select>
                     {formErrors.estilo_enseñanza && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.estilo_enseñanza}</p>
@@ -548,8 +570,9 @@ const AdminProfessors = () => {
                         }`}
                     >
                       <option value="">Seleccionar estilo</option>
-                      <option value="presencial">Presencial</option>
-                      <option value="virtual">Virtual</option>
+                      <option value="mixto">Mixto</option>
+                      <option value="con_tecnologia">Uso de herramientas tecnológicas</option>
+                      <option value="sin_tecnologia">Sin uso de herramientas tecnológicas</option>
                     </select>
                     {formErrors.estilo_clase && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.estilo_clase}</p>

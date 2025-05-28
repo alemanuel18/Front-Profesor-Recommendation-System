@@ -243,7 +243,7 @@ const ProfessorDetails = () => {
         setManagingCourses(true);
         try {
             console.log('🗑️ Eliminando curso del profesor...');
-            const response = await apiService.removeCourseFromProfesor(professor.nombre, courseToDelete.codigo);
+            const response = await apiService.desasignarCursoProfesor(professor.nombre, courseToDelete.codigo);
 
             if (response && response.success) {
                 await fetchProfessorCourses(); // Recargar cursos
