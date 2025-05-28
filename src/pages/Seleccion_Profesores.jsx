@@ -146,11 +146,23 @@ const Seleccion_Profesores = () => {
      */
     const fetchRecommendations = async (courseCode) => {
         setLoading(true);
+        
+        // VALIDAR que studentName esté definido
+        if (!studentName || studentName.trim() === '') {
+            console.error('❌ Error: studentName no está definido');
+            setError('Nombre del estudiante no disponible');
+            setLoading(false);
+            return;
+        }
+        
         try {
-            console.log(`🔍 Obteniendo recomendaciones para ${studentName}`);
+            console.log(`🔍 Obteniendo recomendaciones para "${studentName}"`);
 
             // Llamada al API usando el método corregido
-            const response = await ApiService.getRecomendaciones(studentName, { codigoCurso: courseCode, incluirDetalles: true });
+            const response = await ApiService.getRecomendaciones(studentName, { 
+                codigoCurso: courseCode, 
+                incluirDetalles: true 
+            });
             
             console.log('📊 Respuesta completa del backend:', response);
             
@@ -200,14 +212,15 @@ const Seleccion_Profesores = () => {
                 
             } else {
                 console.warn('⚠️ No se encontraron recomendaciones válidas, obteniendo profesores del curso');
-                await fetchCourseProfessors(courseCode);
+                // PASAR studentName explícitamente al fallback
+                await fetchCourseProfessors(courseCode, studentName);
             }
 
         } catch (err) {
             console.error('❌ Error obteniendo recomendaciones:', err);
             console.error('📄 Detalles del error:', err.response?.data || err.message);
-            // Como fallback, obtener profesores del curso
-            await fetchCourseProfessors(courseCode);
+            // Como fallback, obtener profesores del curso PASANDO studentName
+            await fetchCourseProfessors(courseCode, studentName);
         } finally {
             setLoading(false);
         }
@@ -215,10 +228,48 @@ const Seleccion_Profesores = () => {
 
     /**
      * Obtiene todos los profesores del curso como fallback
+     * PARÁMETRO AÑADIDO: studentNameParam para evitar el error de null
      */
-    const fetchCourseProfessors = async (courseCode) => {
+    const fetchCourseProfessors = async (courseCode, studentNameParam = null) => {
+        // Usar el parámetro pasado o el estado global
+        const currentStudentName = studentNameParam || studentName;
+        
+        // VALIDAR que tengamos un nombre de estudiante
+        if (!currentStudentName || currentStudentName.trim() === '') {
+            console.error('❌ Error: No se puede obtener compatibilidad sin nombre del estudiante');
+            console.log('🔄 Obteniendo solo profesores del curso sin compatibilidad...');
+            
+            // Fallback: obtener profesores sin compatibilidad
+            try {
+                const response = await ApiService.getProfesoresPorCurso(courseCode);
+                const professors = response.data || response || [];
+                
+                const professorsWithoutCompatibility = professors.map((prof, index) => ({
+                    id: index,
+                    professorName: prof.nombre,
+                    rating: parseFloat(prof.evaluacion_docente) || 4.0,
+                    experience: parseInt(prof.años_experiencia) || 5,
+                    approvalRate: parseFloat(prof.porcentaje_aprobados) || 75,
+                    teachingStyle: prof.estilo_enseñanza || 'tradicional',
+                    classStyle: prof.estilo_clase || 'presencial',
+                    image: getProfessorImage(index),
+                    compatibilityScore: 0, // Sin compatibilidad disponible
+                    reasons: ["Información de compatibilidad no disponible"],
+                }));
+                
+                setAllProfessors(professorsWithoutCompatibility);
+                setRecommendations(professorsWithoutCompatibility);
+                console.log(`⚠️ Se obtuvieron ${professors.length} profesores SIN compatibilidad`);
+            } catch (error) {
+                console.error('❌ Error obteniendo profesores básicos:', error);
+                setRecommendations([]);
+                setAllProfessors([]);
+            }
+            return;
+        }
+        
         try {
-            console.log(`👥 Obteniendo profesores del curso ${courseCode}`);
+            console.log(`👥 Obteniendo profesores del curso ${courseCode} para estudiante "${currentStudentName}"`);
 
             const response = await ApiService.getProfesoresPorCurso(courseCode);
             const professors = response.data || response || [];
@@ -232,18 +283,23 @@ const Seleccion_Profesores = () => {
                         let compatibilityScore = 0; // Inicializar en 0 para detectar fallos
                         
                         try {
-                            // Usar el método correcto del API
-                            const compatibilityResponse = await ApiService.getPorcentajeRecomendacion(studentName, prof.nombre);
+                            console.log(`🎯 Obteniendo compatibilidad para "${currentStudentName}" y "${prof.nombre}"`);
+                            
+                            // Usar el método correcto del API CON VALIDACIÓN
+                            const compatibilityResponse = await ApiService.getPorcentajeRecomendacion(
+                                currentStudentName, 
+                                prof.nombre
+                            );
                             
                             if (compatibilityResponse?.data?.porcentaje !== undefined) {
                                 compatibilityScore = parseFloat(compatibilityResponse.data.porcentaje);
-                                console.log(`🎯 Compatibilidad específica para ${prof.nombre}: ${compatibilityScore}%`);
+                                console.log(`✅ Compatibilidad específica para ${prof.nombre}: ${compatibilityScore}%`);
                             } else {
                                 console.warn(`⚠️ Respuesta sin porcentaje para ${prof.nombre}:`, compatibilityResponse);
                             }
                         } catch (compatErr) {
                             console.warn(`⚠️ Error obteniendo compatibilidad para ${prof.nombre}:`, compatErr.message);
-                            // No asignar valor por defecto, mantener 0 para debug
+                            // Mantener compatibilityScore = 0 para debug
                         }
                         
                         return {
