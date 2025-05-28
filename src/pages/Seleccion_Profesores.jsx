@@ -437,80 +437,100 @@ const Seleccion_Profesores = () => {
     };
 
     /**
-     * Maneja la selección de un profesor para inscribirse en su curso
-     */
-    const handleProfessorSelect = async (professorId, professorName) => {
-        if (processingSelection || enrollmentCheck.loading || enrollmentCheck.isEnrolled) return;
-        
-        try {
-            setProcessingSelection(true);
-            
-            // Mostrar diálogo de confirmación primero
-            const confirmed = window.confirm(
-                `¿Deseas inscribirte con el profesor ${professorName} para el curso ${courseInfo?.nombre}?\n\nUna vez inscrito, no podrás cambiarte de profesor.`
-            );
-            
-            if (!confirmed) {
-                setProcessingSelection(false);
-                return;
-            }
+ * Maneja la selección de un profesor para inscribirse en su curso
+ */
+const handleProfessorSelect = async (professorId, professorName) => {
+    if (processingSelection || enrollmentCheck.loading || enrollmentCheck.isEnrolled) return;
 
-            // Verificar disponibilidad del profesor
-            const profesorResponse = await ApiService.getProfesor(professorName);
-            if (!profesorResponse?.data?.disponibilidad || profesorResponse.data.disponibilidad <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Falta de Disponibilidad',
-                    text: 'El profesor no tiene disponibilidad actualmente',
-                });
-                throw new Error('El profesor no tiene disponibilidad actualmente');
-            }
+    try {
+        setProcessingSelection(true);
 
-            // Inscribir estudiante
-            const inscripcionResponse = await ApiService.asignarEstudianteCurso(
-                currentUser.carnet,
-                {
-                    codigo_curso: courseInfo.codigo,
-                    nombre_profesor: professorName
-                }
-            );
+        // Mostrar diálogo de confirmación con SweetAlert2
+        const result = await Swal.fire({
+            title: 'Confirmar Inscripción',
+            html: `
+                <div style="text-align: center;">
+                    <p><strong>¿Deseas inscribirte con el profesor ${professorName}?</strong></p>
+                    <p>Curso: <em>${courseInfo?.nombre}</em></p>
+                    <hr style="margin: 15px 0;">
+                    <p style="color: #666; font-size: 0.9em;">
+                        ⚠️ Una vez inscrito, no podrás cambiarte de profesor
+                    </p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, inscribirme',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            focusConfirm: false,
+            focusCancel: true
+        });
 
-            if (!inscripcionResponse.success) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de inscripción',
-                    text: 'Error al inscribirse al curso',
-                    confirmButtonText: 'Entendido'
-                });
-                throw new Error(inscripcionResponse.message || 'Error al inscribirse al curso');
-            }
+        // Si el usuario cancela, salir de la función
+        if (!result.isConfirmed) {
+            setProcessingSelection(false);
+            return;
+        }
 
-            // Actualizar UI inmediatamente
-            setEnrollmentCheck({
-                loading: false,
-                isEnrolled: true,
-                currentProfessor: professorName,
-                error: null
-            });
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Inscrito',
-                text: '¡Inscripción exitosa!',
-            });
-
-        } catch (error) {
-            console.error('Error en el proceso de inscripción:', error);
+        // Verificar disponibilidad del profesor
+        const profesorResponse = await ApiService.getProfesor(professorName);
+        if (!profesorResponse?.data?.disponibilidad || profesorResponse.data.disponibilidad <= 0) {
             Swal.fire({
                 icon: 'error',
-                title: 'Error de conexión',
-                text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+                title: 'Falta de Disponibilidad',
+                text: 'El profesor no tiene disponibilidad actualmente',
+            });
+            throw new Error('El profesor no tiene disponibilidad actualmente');
+        }
+
+        // Inscribir estudiante
+        const inscripcionResponse = await ApiService.asignarEstudianteCurso(
+            currentUser.carnet,
+            {
+                codigo_curso: courseInfo.codigo,
+                nombre_profesor: professorName
+            }
+        );
+
+        if (!inscripcionResponse.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de inscripción',
+                text: 'Error al inscribirse al curso',
                 confirmButtonText: 'Entendido'
             });
-        } finally {
-            setProcessingSelection(false);
+            throw new Error(inscripcionResponse.message || 'Error al inscribirse al curso');
         }
-    };
+
+        // Actualizar UI inmediatamente
+        setEnrollmentCheck({
+            loading: false,
+            isEnrolled: true,
+            currentProfessor: professorName,
+            error: null
+        });
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Inscrito',
+            text: '¡Inscripción exitosa!',
+        });
+
+    } catch (error) {
+        console.error('Error en el proceso de inscripción:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+            confirmButtonText: 'Entendido'
+        });
+    } finally {
+        setProcessingSelection(false);
+    }
+};
 
     /**
      * Limpia todos los filtros
