@@ -302,20 +302,40 @@ const Seleccion_Profesores = () => {
     };
 
     /**
-     * Maneja la selección de un profesor para inscribirse en su curso
-     */
+ * Maneja la selección de un profesor para inscribirse en su curso
+ */
     const handleProfessorSelect = async (professorId, professorName) => {
         if (processingSelection || enrollmentCheck.loading || enrollmentCheck.isEnrolled) return;
 
         try {
             setProcessingSelection(true);
 
-            // Mostrar diálogo de confirmación primero
-            const confirmed = window.confirm(
-                `¿Deseas inscribirte con el profesor ${professorName} para el curso ${courseInfo?.nombre}?\n\nUna vez inscrito, no podrás cambiarte de profesor.`
-            );
+            // Mostrar diálogo de confirmación con SweetAlert2
+            const result = await Swal.fire({
+                title: 'Confirmar Inscripción',
+                html: `
+                <div style="text-align: center;">
+                    <p><strong>¿Deseas inscribirte con el profesor ${professorName}?</strong></p>
+                    <p>Curso: <em>${courseInfo?.nombre}</em></p>
+                    <hr style="margin: 15px 0;">
+                    <p style="color: #666; font-size: 0.9em;">
+                        ⚠️ Una vez inscrito, no podrás cambiarte de profesor
+                    </p>
+                </div>
+            `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, inscribirme',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                focusConfirm: false,
+                focusCancel: true
+            });
 
-            if (!confirmed) {
+            // Si el usuario cancela, salir de la función
+            if (!result.isConfirmed) {
                 setProcessingSelection(false);
                 return;
             }
