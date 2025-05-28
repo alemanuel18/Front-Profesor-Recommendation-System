@@ -1,6 +1,6 @@
 // @ Front-Profesor-Recommendation-System
 // @ File Name : Seleccion_Profesores.jsx
-// @ Date : 25/05/2025
+// @ Date : 27/05/2025
 // @ Author : Alejandro Jerez, Marcelo Detlefsen
 
 /**
@@ -64,12 +64,13 @@ const Seleccion_Profesores = () => {
     // Verificar inscripción del estudiante al curso
     useEffect(() => {
         if (!studentName || !courseInfo?.codigo) return;
+        if (!studentName || !courseInfo?.codigo) return;
 
         const checkEnrollment = async () => {
-            setEnrollmentCheck(prev => ({ ...prev, loading: true }));
+            setEnrollmentCheck(prev => ({...prev, loading: true}));
             try {
                 const inscripcionInfo = await ApiService.getInformacionInscripcion(
-                    currentUser.carnet,
+                    currentUser.carnet, 
                     courseInfo.codigo
                 );
                 setEnrollmentCheck({
@@ -89,8 +90,8 @@ const Seleccion_Profesores = () => {
         };
 
         checkEnrollment();
+        checkEnrollment();
     }, [studentName, courseInfo?.codigo, currentUser.carnet]);
-
 
     // ===== FUNCIONES PRINCIPALES =====
 
@@ -144,29 +145,71 @@ const Seleccion_Profesores = () => {
      * Obtiene las recomendaciones de profesores para el estudiante
      */
     const fetchRecommendations = async (courseCode) => {
+        setLoading(true);
         try {
             console.log(`🔍 Obteniendo recomendaciones para ${studentName}`);
 
-            const recs = await ApiService.getRecomendaciones(studentName);
-
-            if (recs && recs.length > 0) {
-                // Filtrar recomendaciones para el curso actual si es necesario
-                const courseRecommendations = recs.filter(rec =>
-                    !courseCode || rec.codigo_curso === courseCode
-                );
-
-                setRecommendations(courseRecommendations);
-                console.log(`✅ Se obtuvieron ${courseRecommendations.length} recomendaciones`);
+            // Llamada al API usando el método corregido
+            const response = await ApiService.getRecomendaciones(studentName, { codigoCurso: courseCode, incluirDetalles: true });
+            
+            console.log('📊 Respuesta completa del backend:', response);
+            
+            // Extraer recomendaciones de la respuesta
+            const recomendacionesData = response?.data?.recomendaciones || response?.recomendaciones || [];
+            
+            console.log('📋 Recomendaciones extraídas:', recomendacionesData);
+            
+            if (recomendacionesData && Array.isArray(recomendacionesData) && recomendacionesData.length > 0) {
+                // Mapear las recomendaciones al formato esperado
+                const formattedRecommendations = recomendacionesData.map((rec, index) => {
+                    console.log(`👨‍🏫 Procesando profesor: ${rec.profesor}, Compatibilidad: ${rec.porcentaje_recomendacion}%`);
+                    
+                    return {
+                        id: index,
+                        professorName: rec.profesor,
+                        rating: parseFloat(rec.evaluacion_docente) || 4.0,
+                        experience: parseInt(rec.años_experiencia) || 5,
+                        approvalRate: parseFloat(rec.porcentaje_aprobados) || 75,
+                        teachingStyle: rec.estilo_enseñanza || 'tradicional',
+                        classStyle: rec.estilo_clase || 'presencial',
+                        image: getProfessorImage(index),
+                        // USAR EL PORCENTAJE REAL DEL ALGORITMO
+                        compatibilityScore: parseFloat(rec.porcentaje_recomendacion) || 0,
+                        reasons: getReasonsForProfessor(rec),
+                        // Campos adicionales para debugging
+                        indiceCompatibilidad: rec.indice_compatibilidad,
+                        detallesCalculo: rec.detalles_calculo
+                    };
+                });
+                
+                // Ordenar por compatibilidad descendente
+                formattedRecommendations.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
+                
+                setRecommendations(formattedRecommendations);
+                console.log(`✅ Se obtuvieron ${formattedRecommendations.length} recomendaciones`);
+                
+                // Mostrar estadísticas de compatibilidad
+                const avgCompatibility = formattedRecommendations.reduce((sum, rec) => sum + rec.compatibilityScore, 0) / formattedRecommendations.length;
+                const maxCompatibility = Math.max(...formattedRecommendations.map(r => r.compatibilityScore));
+                const minCompatibility = Math.min(...formattedRecommendations.map(r => r.compatibilityScore));
+                
+                console.log(`📈 Estadísticas de compatibilidad:`);
+                console.log(`   - Promedio: ${avgCompatibility.toFixed(2)}%`);
+                console.log(`   - Máximo: ${maxCompatibility.toFixed(2)}%`);
+                console.log(`   - Mínimo: ${minCompatibility.toFixed(2)}%`);
+                
             } else {
-                console.warn('⚠️ No se encontraron recomendaciones, obteniendo profesores del curso');
-                // Fallback: obtener profesores del curso
+                console.warn('⚠️ No se encontraron recomendaciones válidas, obteniendo profesores del curso');
                 await fetchCourseProfessors(courseCode);
             }
 
         } catch (err) {
             console.error('❌ Error obteniendo recomendaciones:', err);
-            // Fallback: obtener profesores del curso
+            console.error('📄 Detalles del error:', err.response?.data || err.message);
+            // Como fallback, obtener profesores del curso
             await fetchCourseProfessors(courseCode);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -178,29 +221,56 @@ const Seleccion_Profesores = () => {
             console.log(`👥 Obteniendo profesores del curso ${courseCode}`);
 
             const response = await ApiService.getProfesoresPorCurso(courseCode);
-            const professors = response.data || []; // Asegurarse de acceder a response.data
-            // Usar servicio externo confiable para placeholders
-            const getProfessorImage = (index) =>
-                `https://www.flaticon.es/icono-gratis/persona_3577429`;
+            const professors = response.data || response || [];
+            
+            console.log('👥 Profesores del curso obtenidos:', professors);
 
             if (professors.length > 0) {
-                // Convertir profesores a formato de recomendación
-                const professorsAsRecommendations = professors.map((prof, index) => ({
-                    id: index,
-                    professorName: prof.nombre,
-                    rating: parseFloat(prof.evaluacion_docente) || 4.0,
-                    experience: parseInt(prof.años_experiencia) || 5,
-                    approvalRate: parseFloat(prof.porcentaje_aprobados) || 75,
-                    teachingStyle: prof.estilo_enseñanza || 'tradicional',
-                    classStyle: prof.estilo_clase || 'presencial',
-                    image: getProfessorImage(index), // Imagen de profesor (placeholder)
-                    compatibilityScore: calculateCompatibility(prof), // Función que calcula compatibilidad
-                    reasons: getReasonsForProfessor(prof) // Función que genera razones
-                }));
+                // Convertir profesores a formato de recomendación CON compatibilidad real
+                const professorsAsRecommendations = await Promise.all(
+                    professors.map(async (prof, index) => {
+                        let compatibilityScore = 0; // Inicializar en 0 para detectar fallos
+                        
+                        try {
+                            // Usar el método correcto del API
+                            const compatibilityResponse = await ApiService.getPorcentajeRecomendacion(studentName, prof.nombre);
+                            
+                            if (compatibilityResponse?.data?.porcentaje !== undefined) {
+                                compatibilityScore = parseFloat(compatibilityResponse.data.porcentaje);
+                                console.log(`🎯 Compatibilidad específica para ${prof.nombre}: ${compatibilityScore}%`);
+                            } else {
+                                console.warn(`⚠️ Respuesta sin porcentaje para ${prof.nombre}:`, compatibilityResponse);
+                            }
+                        } catch (compatErr) {
+                            console.warn(`⚠️ Error obteniendo compatibilidad para ${prof.nombre}:`, compatErr.message);
+                            // No asignar valor por defecto, mantener 0 para debug
+                        }
+                        
+                        return {
+                            id: index,
+                            professorName: prof.nombre,
+                            rating: parseFloat(prof.evaluacion_docente) || 4.0,
+                            experience: parseInt(prof.años_experiencia) || 5,
+                            approvalRate: parseFloat(prof.porcentaje_aprobados) || 75,
+                            teachingStyle: prof.estilo_enseñanza || 'tradicional',
+                            classStyle: prof.estilo_clase || 'presencial',
+                            image: getProfessorImage(index),
+                            compatibilityScore: compatibilityScore, // Usar el valor real obtenido
+                            reasons: getReasonsForProfessor(prof),
+                        };
+                    })
+                );
+
+                // Ordenar por compatibilidad descendente
+                professorsAsRecommendations.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
 
                 setAllProfessors(professorsAsRecommendations);
                 setRecommendations(professorsAsRecommendations);
-                console.log(`✅ Se obtuvieron ${professors.length} profesores del curso`);
+                
+                console.log(`✅ Se obtuvieron ${professors.length} profesores con compatibilidad:`);
+                professorsAsRecommendations.forEach(prof => {
+                    console.log(`   - ${prof.professorName}: ${prof.compatibilityScore}%`);
+                });
             } else {
                 console.warn('⚠️ No se encontraron profesores para este curso');
                 setRecommendations([]);
@@ -214,32 +284,41 @@ const Seleccion_Profesores = () => {
         }
     };
 
-    // Función auxiliar para calcular compatibilidad (puedes personalizarla)
-    const calculateCompatibility = (professor) => {
-        // Ejemplo simple basado en evaluación docente y porcentaje de aprobados
-        const baseScore = (professor.evaluacion_docente * 10) + (professor.porcentaje_aprobados * 0.5);
-        return Math.min(100, baseScore); // Asegurar que no pase de 100
+    /**
+     * Función auxiliar para obtener imagen del profesor
+     */
+    const getProfessorImage = (index) => {
+        const imageIndex = (index % 10) + 1;
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=professor${imageIndex}`;
     };
 
-    // Función auxiliar para generar razones de recomendación
-    const getReasonsForProfessor = (professor) => {
+    /**
+     * Función auxiliar para generar razones de recomendación
+     */
+    const getReasonsForProfessor = (prof) => {
         const reasons = [];
-
-        if (professor.años_experiencia >= 5) {
-            reasons.push(`Experiencia (${professor.años_experiencia} años)`);
+        
+        // Usar los campos que vienen del algoritmo
+        if (prof.compatibilidad_estilos && prof.compatibilidad_estilos > 80) {
+            reasons.push("Excelente compatibilidad de estilos");
         }
-
-        if (professor.evaluacion_docente >= 4.0) {
-            reasons.push(`Alta evaluación (${professor.evaluacion_docente}/5.0)`);
+        if (prof.evaluacion_docente && parseFloat(prof.evaluacion_docente) > 4.0) {
+            reasons.push("Alta evaluación docente");
         }
-
-        if (professor.porcentaje_aprobados >= 75) {
-            reasons.push(`Alto porcentaje de aprobados (${professor.porcentaje_aprobados}%)`);
+        if (prof.porcentaje_aprobados && parseFloat(prof.porcentaje_aprobados) > 80) {
+            reasons.push("Alto índice de aprobación");
         }
-
-        reasons.push(`Estilo de enseñanza: ${professor.estilo_enseñanza}`);
-
-        return reasons.length > 0 ? reasons : ['Profesor verificado'];
+        if (prof.años_experiencia && parseInt(prof.años_experiencia) > 10) {
+            reasons.push("Amplia experiencia docente");
+        }
+        if (prof.afinidad && prof.afinidad > 70) {
+            reasons.push("Recomendado por estudiantes similares");
+        }
+        if (prof.porcentaje_recomendacion && prof.porcentaje_recomendacion > 85) {
+            reasons.push("Alta compatibilidad general");
+        }
+        
+        return reasons.length > 0 ? reasons : ["Profesor capacitado para el curso"];
     };
 
     /**
@@ -247,11 +326,11 @@ const Seleccion_Profesores = () => {
      */
     const getFallbackCourseData = (courseId) => {
         const fallbackCourses = {
-            "MAT101": { codigo: "MAT101", nombre: "Cálculo 1", departamento: "Matemáticas" },
-            "MAT102": { codigo: "MAT102", nombre: "Álgebra Lineal 1", departamento: "Matemáticas" },
-            "EST101": { codigo: "EST101", nombre: "Estadística 1", departamento: "Estadística" },
-            "MAT201": { codigo: "MAT201", nombre: "Cálculo 2", departamento: "Matemáticas" },
-            "CC101": { codigo: "CC101", nombre: "Programación 1", departamento: "Ciencias de la Computación" }
+            "MAT101": { codigo: "MAT101", nombre: "Cálculo 1"},
+            "MAT102": { codigo: "MAT102", nombre: "Álgebra Lineal 1"},
+            "EST101": { codigo: "EST101", nombre: "Estadística 1"},
+            "MAT201": { codigo: "MAT201", nombre: "Cálculo 2"},
+            "CC101": { codigo: "CC101", nombre: "Programación 1"}
         };
 
         return fallbackCourses[courseId] || {
@@ -302,40 +381,20 @@ const Seleccion_Profesores = () => {
     };
 
     /**
- * Maneja la selección de un profesor para inscribirse en su curso
- */
+     * Maneja la selección de un profesor para inscribirse en su curso
+     */
     const handleProfessorSelect = async (professorId, professorName) => {
         if (processingSelection || enrollmentCheck.loading || enrollmentCheck.isEnrolled) return;
-
+        
         try {
             setProcessingSelection(true);
-
-            // Mostrar diálogo de confirmación con SweetAlert2
-            const result = await Swal.fire({
-                title: 'Confirmar Inscripción',
-                html: `
-                <div style="text-align: center;">
-                    <p><strong>¿Deseas inscribirte con el profesor ${professorName}?</strong></p>
-                    <p>Curso: <em>${courseInfo?.nombre}</em></p>
-                    <hr style="margin: 15px 0;">
-                    <p style="color: #666; font-size: 0.9em;">
-                        ⚠️ Una vez inscrito, no podrás cambiarte de profesor
-                    </p>
-                </div>
-            `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí, inscribirme',
-                cancelButtonText: 'Cancelar',
-                reverseButtons: true,
-                focusConfirm: false,
-                focusCancel: true
-            });
-
-            // Si el usuario cancela, salir de la función
-            if (!result.isConfirmed) {
+            
+            // Mostrar diálogo de confirmación primero
+            const confirmed = window.confirm(
+                `¿Deseas inscribirte con el profesor ${professorName} para el curso ${courseInfo?.nombre}?\n\nUna vez inscrito, no podrás cambiarte de profesor.`
+            );
+            
+            if (!confirmed) {
                 setProcessingSelection(false);
                 return;
             }
@@ -461,11 +520,6 @@ const Seleccion_Profesores = () => {
                                 <span className="bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full font-semibold">
                                     {courseInfo.codigo}
                                 </span>
-                                {courseInfo.departamento && (
-                                    <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-semibold ml-2">
-                                        {courseInfo.departamento}
-                                    </span>
-                                )}
                             </div>
                             <p className="text-gray-600">
                                 {studentName ?
@@ -511,7 +565,7 @@ const Seleccion_Profesores = () => {
                                 <input
                                     type="search"
                                     className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-teal-500 focus:border-teal-500"
-                                    placeholder="Buscar por profesor, departamento o estilo de enseñanza..."
+                                    placeholder="Buscar por profesor, o estilo de enseñanza..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -674,7 +728,7 @@ const Seleccion_Profesores = () => {
                                 </div>
                                 <div className="ml-3">
                                     <p className="text-sm text-yellow-700">
-                                        <strong>Ya estás inscrito en este curso</strong> con el profesor {enrollmentCheck.currentProfessor}.
+                                        <strong>Ya estás inscrito en este curso</strong> con el profesor {enrollmentCheck.currentProfessor}. 
                                         No puedes cambiarte de profesor una vez inscrito.
                                     </p>
                                 </div>
@@ -695,7 +749,7 @@ const Seleccion_Profesores = () => {
 
                                 {/* Indicador de puntuación de compatibilidad */}
                                 <div className="absolute top-2 right-2 z-10 bg-gradient-to-r from-green-400 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                    {recommendation.compatibilityScore?.toFixed(1) || '75.0'}% Compatible
+                                    {recommendation.compatibilityScore.toFixed(1)}% Compatible
                                 </div>
 
                                 {/* Tarjeta del profesor */}
@@ -737,16 +791,17 @@ const Seleccion_Profesores = () => {
                                                 <span className="text-gray-600">Evaluación:</span>
                                                 <div className="flex items-center">
                                                     <span className="font-semibold text-yellow-600 mr-1">
-                                                        {recommendation.rating?.toFixed(1) || '4.0'}
+                                                        {recommendation.rating.toFixed(1)}
                                                     </span>
                                                     <div className="flex">
                                                         {[1, 2, 3, 4, 5].map((star) => (
                                                             <svg
                                                                 key={star}
-                                                                className={`w-3 h-3 ${star <= (recommendation.rating || 4)
-                                                                    ? 'text-yellow-400'
-                                                                    : 'text-gray-300'
-                                                                    }`}
+                                                                className={`w-3 h-3 ${
+                                                                    star <= recommendation.rating
+                                                                        ? 'text-yellow-400'
+                                                                        : 'text-gray-300'
+                                                                }`}
                                                                 fill="currentColor"
                                                                 viewBox="0 0 20 20"
                                                             >
@@ -827,6 +882,5 @@ const Seleccion_Profesores = () => {
             </div>
         </div>
     );
-};
-
+}
 export default Seleccion_Profesores;

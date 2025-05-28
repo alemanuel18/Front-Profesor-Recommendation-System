@@ -496,9 +496,9 @@ const ProfessorDetails = () => {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                                         >
                                             <option value="">Seleccionar estilo</option>
-                                            <option value="visual">Visual</option>
-                                            <option value="práctico">Práctico</option>
-                                            <option value="teórico">Teórico</option>
+                                            <option value="mixto">Mixto</option>
+                                            <option value="practico">Práctico</option>
+                                            <option value="teorico">Teórico</option>
                                         </select>
                                     ) : (
                                         <p className="text-gray-900 capitalize">{professor?.estilo_enseñanza || 'No especificado'}</p>
@@ -517,8 +517,9 @@ const ProfessorDetails = () => {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                                         >
                                             <option value="">Seleccionar estilo</option>
-                                            <option value="presencial">Presencial</option>
-                                            <option value="virtual">Virtual</option>
+                                            <option value="con_tecnologia">Uso de herramientas tecnológicas</option>
+                                            <option value="sin_tecnologia">Sin uso de herramientas tecnológicas</option>
+                                            <option value="mixto">Mixto</option>
                                         </select>
                                     ) : (
                                         <p className="text-gray-900 capitalize">{professor?.estilo_clase || 'No especificado'}</p>
