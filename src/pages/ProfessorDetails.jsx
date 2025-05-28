@@ -17,13 +17,15 @@ import { useAuth } from '../context/AuthContext';
 import Header from '../Components/Header';
 import AdminSidebar from '../Components/Admin/AdminSidebar';
 import apiService from '../services/apiService';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const ProfessorDetails = () => {
     // ===== HOOKS Y ESTADOS =====
     const { professorId } = useParams();
     const { isAdmin } = useAuth();
     const navigate = useNavigate();
-    
+
     // Estados locales
     const [professor, setProfessor] = useState(null);
     const [courses, setCourses] = useState([]);
@@ -33,7 +35,7 @@ const ProfessorDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
     const [saving, setSaving] = useState(false);
-    
+
     // Estados para gestión de cursos
     const [showAddCourseModal, setShowAddCourseModal] = useState(false);
     const [showDeleteCourseModal, setShowDeleteCourseModal] = useState(false);
@@ -48,7 +50,7 @@ const ProfessorDetails = () => {
             navigate('/');
             return;
         }
-        
+
         if (professorId) {
             fetchProfessorData();
             fetchProfessorCourses();
@@ -101,9 +103,9 @@ const ProfessorDetails = () => {
 
         try {
             console.log(`🔍 Obteniendo datos del profesor: ${professorId}`);
-            
+
             const response = await apiService.getProfesor(professorId);
-            
+
             if (response && response.success && response.data) {
                 const prof = response.data;
                 setProfessor({
@@ -115,7 +117,7 @@ const ProfessorDetails = () => {
                     porcentaje_aprobados: prof.porcentaje_aprobados || 0,
                     disponibilidad: prof.disponibilidad || 0
                 });
-                
+
                 // Inicializar datos de edición
                 setEditData({
                     nombre: prof.nombre,
@@ -126,12 +128,12 @@ const ProfessorDetails = () => {
                     porcentaje_aprobados: prof.porcentaje_aprobados || 0,
                     disponibilidad: prof.disponibilidad || 0
                 });
-                
+
                 console.log('✅ Datos del profesor obtenidos');
             } else {
                 throw new Error('No se encontraron datos del profesor');
             }
-            
+
         } catch (err) {
             console.error('❌ Error obteniendo datos del profesor:', err);
             setError(`Error al cargar los datos del profesor: ${err.message}`);
@@ -149,19 +151,37 @@ const ProfessorDetails = () => {
 
         try {
             console.log('💾 Guardando cambios del profesor...');
-            
+
             const response = await apiService.updateProfesor(professor.nombre, editData);
-            
+
             if (response && response.success) {
                 setProfessor({ ...professor, ...editData });
                 setIsEditing(false);
                 console.log('✅ Profesor actualizado exitosamente');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Actualización Exitosa',
+                    text: 'Los datos del profesor se han actualizado correctamente.',
+                });
             } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'Ocurrió un problema con el servidor. Inténtalo más tarde.',
+                    confirmButtonText: 'Entendido'
+                });
                 throw new Error('Error al actualizar el profesor');
+
             }
-            
+
         } catch (err) {
             console.error('❌ Error guardando cambios:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de actualización',
+                text: 'No se pudieron actualizar los datos del profesor',
+                confirmButtonText: 'Entendido'
+            });
             setError(err.message);
         } finally {
             setSaving(false);
@@ -186,20 +206,20 @@ const ProfessorDetails = () => {
 
         setManagingCourses(true);
         setError(null);
-        
+
         try {
             console.log('➕ Agregando curso al profesor...');
             const response = await apiService.asignarCursoProfesor(
-                professor.nombre, 
+                professor.nombre,
                 selectedCourseToAdd
             );
-            
+
             if (response && response.success) {
                 // Actualizar la lista de cursos del profesor
                 await fetchProfessorCourses();
                 // Actualizar la lista de cursos disponibles
                 await fetchAvailableCourses();
-                
+
                 setShowAddCourseModal(false);
                 setSelectedCourseToAdd('');
                 console.log('✅ Curso agregado exitosamente');
@@ -224,7 +244,7 @@ const ProfessorDetails = () => {
         try {
             console.log('🗑️ Eliminando curso del profesor...');
             const response = await apiService.removeCourseFromProfesor(professor.nombre, courseToDelete.codigo);
-            
+
             if (response && response.success) {
                 await fetchProfessorCourses(); // Recargar cursos
                 setShowDeleteCourseModal(false);
@@ -273,7 +293,7 @@ const ProfessorDetails = () => {
      */
     const getUnassignedCourses = () => {
         const assignedCodes = courses.map(course => course.codigo || course.code);
-        return availableCourses.filter(course => 
+        return availableCourses.filter(course =>
             !assignedCodes.includes(course.codigo || course.code)
         );
     };
@@ -345,28 +365,26 @@ const ProfessorDetails = () => {
                                 Detalle del Profesor
                             </h1>
                         </div>
-                        
+
                         {/* Botones de acción */}
                         <div className="flex space-x-3">
                             <button
                                 onClick={toggleEditMode}
                                 disabled={saving}
-                                className={`px-4 py-2 rounded-lg transition-colors duration-300 ${
-                                    isEditing 
-                                        ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                                        : 'bg-teal-600 text-white hover:bg-teal-700'
-                                } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`px-4 py-2 rounded-lg transition-colors duration-300 ${isEditing
+                                    ? 'bg-gray-600 text-white hover:bg-gray-700'
+                                    : 'bg-teal-600 text-white hover:bg-teal-700'
+                                    } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {isEditing ? 'Cancelar' : 'Editar Profesor'}
                             </button>
-                            
+
                             {isEditing && (
                                 <button
                                     onClick={handleSaveChanges}
                                     disabled={saving}
-                                    className={`px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300 ${
-                                        saving ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
+                                    className={`px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300 ${saving ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
                                 >
                                     {saving ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>
@@ -391,7 +409,7 @@ const ProfessorDetails = () => {
                         {/* Información del profesor */}
                         <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                             <h3 className="text-xl font-semibold text-teal-700 mb-6">Información del Profesor</h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Nombre */}
                                 <div>
@@ -451,15 +469,14 @@ const ProfessorDetails = () => {
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <svg
                                                         key={star}
-                                                        className={`w-4 h-4 ${
-                                                            star <= (professor?.evaluacion_docente || 0)
-                                                                ? 'text-yellow-400'
-                                                                : 'text-gray-300'
-                                                        }`}
+                                                        className={`w-4 h-4 ${star <= (professor?.evaluacion_docente || 0)
+                                                            ? 'text-yellow-400'
+                                                            : 'text-gray-300'
+                                                            }`}
                                                         fill="currentColor"
                                                         viewBox="0 0 20 20"
                                                     >
-                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                                     </svg>
                                                 ))}
                                             </div>
@@ -556,7 +573,7 @@ const ProfessorDetails = () => {
                                 <p className="text-3xl font-bold">{courses?.length || 0}</p>
                             </div>
                         </div>
-                        
+
                         {/* Tabla de cursos asignados */}
                         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
                             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -689,7 +706,7 @@ const ProfessorDetails = () => {
                                 Confirmar Eliminación
                             </h3>
                             <p className="text-sm text-gray-500 mb-4">
-                                ¿Estás seguro de que deseas eliminar el curso "{courseToDelete.nombre || courseToDelete.name}" 
+                                ¿Estás seguro de que deseas eliminar el curso "{courseToDelete.nombre || courseToDelete.name}"
                                 de este profesor? Esta acción no se puede deshacer.
                             </p>
                             <div className="flex space-x-3">

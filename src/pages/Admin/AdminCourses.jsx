@@ -22,6 +22,8 @@ import Header from '../../Components/Header';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const AdminCourses = () => {
   // ===== HOOKS Y CONTEXTO =====
@@ -36,7 +38,7 @@ const AdminCourses = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Formulario
   const [formData, setFormData] = useState({
     nombre: '',
@@ -52,7 +54,7 @@ const AdminCourses = () => {
       navigate('/');
       return;
     }
-    
+
     fetchCourses();
   }, [isAdmin, navigate]);
 
@@ -64,10 +66,10 @@ const AdminCourses = () => {
   const fetchCourses = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await apiService.getCursos();
-      
+
       if (response && response.success) {
         setCourses(response.data || []);
       } else {
@@ -109,16 +111,34 @@ const AdminCourses = () => {
     setIsSubmitting(true);
     try {
       const response = await apiService.deleteCurso(courseToDelete.codigo);
-      
+
       if (response && response.success) {
         await fetchCourses(); // Recargar lista
+        Swal.fire({
+          icon: 'success',
+          title: 'Curso eliminado',
+          text: 'Curso eliminado exitosamente',
+        });
         setShowDeleteModal(false);
         setCourseToDelete(null);
       } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'No se pudo eliminar el curso',
+          text: 'No se pudo eliminar el curso',
+          confirmButtonText: 'Intentar de nuevo'
+        });
         throw new Error('Error al eliminar el curso');
+
       }
     } catch (error) {
       console.error('Error eliminando curso:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo eliminar el curso',
+        text: 'No se pudo eliminar el curso',
+        confirmButtonText: 'Intentar de nuevo'
+      });
       setError(`Error al eliminar el curso: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -133,7 +153,7 @@ const AdminCourses = () => {
       ...prev,
       [field]: value
     }));
-    
+
     // Limpiar error del campo si existe
     if (formErrors[field]) {
       setFormErrors(prev => ({
@@ -174,7 +194,7 @@ const AdminCourses = () => {
    */
   const handleSubmitCourse = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -182,9 +202,14 @@ const AdminCourses = () => {
     setIsSubmitting(true);
     try {
       const response = await apiService.createCurso(formData);
-      
+
       if (response && response.success) {
         await fetchCourses(); // Recargar lista
+        Swal.fire({
+          icon: 'success',
+          title: 'Curso creado',
+          text: 'Curso fue creado exitosamente',
+        });
         setShowAddModal(false);
         resetForm();
       } else {
@@ -192,6 +217,12 @@ const AdminCourses = () => {
       }
     } catch (error) {
       console.error('Error creando curso:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo crear el curso',
+        text: 'No se pudo crear el curso',
+        confirmButtonText: 'Intentar de nuevo'
+      });
       setError(`Error al crear el curso: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -238,10 +269,10 @@ const AdminCourses = () => {
   return (
     <div className="flex">
       <AdminSidebar />
-      
+
       <div className="ml-64 flex-1 w-full">
         <Header />
-        
+
         <div className="p-8">
           {/* Título y botón de agregar */}
           <div className="flex justify-between items-center mb-10">
@@ -283,7 +314,7 @@ const AdminCourses = () => {
                   <th scope="col" className="py-3 px-6">Acciones</th>
                 </tr>
               </thead>
-              
+
               <tbody>
                 {courses && courses.length > 0 ? (
                   courses.map((course, index) => (
@@ -302,12 +333,12 @@ const AdminCourses = () => {
                       <td className="py-4 px-6">
                         {course.departamento || 'N/A'}
                       </td>
-                      
+
                       {/* Créditos */}
                       <td className="py-4 px-6">
                         {course.creditos || 0}
                       </td>
-                      
+
                       {/* Acciones */}
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-3">
@@ -373,9 +404,8 @@ const AdminCourses = () => {
                       type="text"
                       value={formData.nombre}
                       onChange={(e) => handleInputChange('nombre', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.nombre ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.nombre ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Ingrese el nombre del curso"
                     />
                     {formErrors.nombre && (
@@ -392,9 +422,8 @@ const AdminCourses = () => {
                       type="text"
                       value={formData.codigo}
                       onChange={(e) => handleInputChange('codigo', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.codigo ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.codigo ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Ej: MAT101"
                     />
                     {formErrors.codigo && (
@@ -411,9 +440,8 @@ const AdminCourses = () => {
                       type="text"
                       value={formData.departamento}
                       onChange={(e) => handleInputChange('departamento', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.departamento ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.departamento ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Ej: Matemáticas"
                     />
                     {formErrors.departamento && (
@@ -431,9 +459,8 @@ const AdminCourses = () => {
                       min="0"
                       value={formData.creditos}
                       onChange={(e) => handleInputChange('creditos', parseInt(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.creditos ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.creditos ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {formErrors.creditos && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.creditos}</p>
@@ -454,9 +481,8 @@ const AdminCourses = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    className={`px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                   >
                     {isSubmitting ? 'Guardando...' : 'Guardar Curso'}
                   </button>
@@ -493,9 +519,8 @@ const AdminCourses = () => {
                 <button
                   onClick={handleDeleteCourse}
                   disabled={isSubmitting}
-                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isSubmitting ? 'Eliminando...' : 'Eliminar'}
                 </button>

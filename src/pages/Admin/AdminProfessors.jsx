@@ -23,6 +23,8 @@ import { useProfessor } from '../../context/ProfessorContext';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const AdminProfessors = () => {
   // ===== HOOKS Y CONTEXTO =====
@@ -69,7 +71,7 @@ const AdminProfessors = () => {
   const handleProfessorSelect = (professor) => {
     const nombreProfesor = typeof professor === 'string' ? professor : (professor.nombre || professor.name);
     console.log('🔍 Navegando a detalles del profesor:', nombreProfesor);
-    
+
     // Obtener los cursos del profesor antes de navegar
     apiService.getCursosProfesor(nombreProfesor)
       .then(response => {
@@ -97,14 +99,14 @@ const AdminProfessors = () => {
    */
   const handleDeleteClick = (professor) => {
     console.log('🗑️ Profesor seleccionado para eliminar:', professor);
-    
+
     // Asegurar compatibilidad con ambos formatos de datos
     const professorData = {
       ...professor,
       nombre: professor.nombre || professor.name,
       name: professor.name || professor.nombre
     };
-    
+
     console.log('📝 Datos del profesor normalizados:', professorData);
     setProfessorToDelete(professorData);
     setShowDeleteModal(true);
@@ -118,12 +120,17 @@ const AdminProfessors = () => {
 
     // Obtener el nombre del profesor de manera segura
     const nombreProfesor = professorToDelete.nombre || professorToDelete.name;
-    
+
     console.log('🔍 Intentando eliminar profesor:', nombreProfesor);
-    
+
     if (!nombreProfesor) {
       console.error('❌ No se pudo obtener el nombre del profesor');
-      alert('Error: No se pudo identificar el profesor a eliminar.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Credenciales incorrectas',
+        text: 'Error: No se pudo identificar al profesor a eliminar.',
+        confirmButtonText: 'Intentar de nuevo'
+      });
       return;
     }
 
@@ -131,9 +138,14 @@ const AdminProfessors = () => {
     try {
       console.log('🌐 Enviando petición de eliminación para:', nombreProfesor);
       const response = await apiService.deleteProfesor(nombreProfesor);
-      
+
       if (response && response.success) {
         console.log('✅ Profesor eliminado exitosamente');
+        Swal.fire({
+          icon: 'success',
+          title: 'Estudiante eliminado',
+          text: 'Estudiante eliminado exitosamente',
+        });
         await fetchProfessors(); // Recargar lista
         setShowDeleteModal(false);
         setProfessorToDelete(null);
@@ -142,6 +154,12 @@ const AdminProfessors = () => {
       }
     } catch (error) {
       console.error('❌ Error eliminando profesor:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al eliminar profesor',
+        text: 'Error: No se pudo eliminar al profesor.',
+        confirmButtonText: 'Intentar de nuevo'
+      });
       alert(`Error al eliminar el profesor: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -156,7 +174,7 @@ const AdminProfessors = () => {
       ...prev,
       [field]: value
     }));
-    
+
     // Limpiar error del campo si existe
     if (formErrors[field]) {
       setFormErrors(prev => ({
@@ -209,7 +227,7 @@ const AdminProfessors = () => {
    */
   const handleSubmitProfessor = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -217,18 +235,35 @@ const AdminProfessors = () => {
     setIsSubmitting(true);
     try {
       const response = await apiService.createProfesor(formData);
-      
+
       if (response && response.success) {
         console.log('✅ Profesor creado exitosamente');
+        Swal.fire({
+          icon: 'success',
+          title: 'Profesro creado',
+          text: 'Profesor creado exitosamente',
+        });
         await fetchProfessors(); // Recargar lista
         setShowAddModal(false);
         resetForm();
       } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al crear profesor',
+          text: 'Error: No se pudo crear al profesor.',
+          confirmButtonText: 'Intentar de nuevo'
+        });
         throw new Error('Error al crear el profesor');
       }
     } catch (error) {
       console.error('❌ Error creando profesor:', error);
       alert('Error al crear el profesor. Inténtalo de nuevo.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al crear profesor',
+        text: 'Error: No se pudo crear al profesor.',
+        confirmButtonText: 'Intentar de nuevo'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -271,10 +306,10 @@ const AdminProfessors = () => {
   return (
     <div className="flex">
       <AdminSidebar />
-      
+
       <div className="ml-64 flex-1 w-full">
         <Header />
-        
+
         <div className="p-8">
           {/* Título y botón de agregar */}
           <div className="flex justify-between items-center mb-10">
@@ -311,19 +346,19 @@ const AdminProfessors = () => {
                   <th scope="col" className="py-3 px-6">Acciones</th>
                 </tr>
               </thead>
-              
+
               <tbody>
                 {professors && professors.length > 0 ? (
                   professors.map((professor, index) => {
                     // Debug: Log cada profesor individualmente
                     console.log(`👨‍🏫 Profesor ${index}:`, professor);
-                    
+
                     return (
                       <tr key={professor.nombre || professor.name || index} className="bg-white border-b hover:bg-gray-50">
                         {/* Imagen */}
                         <td className="py-4 px-6">
                           <div className="relative">
-                            <img 
+                            <img
                               className="w-10 h-10 rounded-full object-cover bg-gray-200"
                               src="/images/professor-avatar.jpg"  // Imagen genérica local
                               alt={`Avatar de ${professor.nombre || professor.name || 'Profesor'}`}
@@ -353,7 +388,7 @@ const AdminProfessors = () => {
                         <td className="py-4 px-6">
                           {professor.años_experiencia || professor.experience || 0} años
                         </td>
-                        
+
                         {/* Evaluación docente - Compatibilidad con ambos formatos */}
                         <td className="py-4 px-6">
                           <div className="flex items-center">
@@ -365,7 +400,7 @@ const AdminProfessors = () => {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Acciones */}
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
@@ -432,9 +467,8 @@ const AdminProfessors = () => {
                       type="text"
                       value={formData.nombre}
                       onChange={(e) => handleInputChange('nombre', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.nombre ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.nombre ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Ingrese el nombre completo"
                     />
                     {formErrors.nombre && (
@@ -453,9 +487,8 @@ const AdminProfessors = () => {
                       max="50"
                       value={formData.años_experiencia}
                       onChange={(e) => handleInputChange('años_experiencia', parseInt(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.años_experiencia ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.años_experiencia ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {formErrors.años_experiencia && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.años_experiencia}</p>
@@ -474,9 +507,8 @@ const AdminProfessors = () => {
                       step="0.1"
                       value={formData.evaluacion_docente}
                       onChange={(e) => handleInputChange('evaluacion_docente', parseFloat(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.evaluacion_docente ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.evaluacion_docente ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {formErrors.evaluacion_docente && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.evaluacion_docente}</p>
@@ -491,9 +523,8 @@ const AdminProfessors = () => {
                     <select
                       value={formData.estilo_enseñanza}
                       onChange={(e) => handleInputChange('estilo_enseñanza', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.estilo_enseñanza ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.estilo_enseñanza ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                       <option value="">Seleccionar estilo</option>
                       <option value="visual">Visual</option>
@@ -513,9 +544,8 @@ const AdminProfessors = () => {
                     <select
                       value={formData.estilo_clase}
                       onChange={(e) => handleInputChange('estilo_clase', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.estilo_clase ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.estilo_clase ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                       <option value="">Seleccionar estilo</option>
                       <option value="presencial">Presencial</option>
@@ -537,9 +567,8 @@ const AdminProfessors = () => {
                       max="100"
                       value={formData.porcentaje_aprobados}
                       onChange={(e) => handleInputChange('porcentaje_aprobados', parseFloat(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.porcentaje_aprobados ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.porcentaje_aprobados ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {formErrors.porcentaje_aprobados && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.porcentaje_aprobados}</p>
@@ -557,9 +586,8 @@ const AdminProfessors = () => {
                       max="5"
                       value={formData.disponibilidad}
                       onChange={(e) => handleInputChange('disponibilidad', parseInt(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                        formErrors.disponibilidad ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${formErrors.disponibilidad ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {formErrors.disponibilidad && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.disponibilidad}</p>
@@ -580,9 +608,8 @@ const AdminProfessors = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    className={`px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                   >
                     {isSubmitting ? 'Guardando...' : 'Guardar Profesor'}
                   </button>
@@ -605,7 +632,7 @@ const AdminProfessors = () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Confirmar Eliminación</h3>
               <p className="text-sm text-gray-500 mb-6">
-                ¿Estás seguro de que deseas eliminar al profesor <strong>{professorToDelete?.nombre || professorToDelete?.name}</strong>? 
+                ¿Estás seguro de que deseas eliminar al profesor <strong>{professorToDelete?.nombre || professorToDelete?.name}</strong>?
                 Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-center space-x-3">
@@ -619,9 +646,8 @@ const AdminProfessors = () => {
                 <button
                   onClick={handleDeleteProfessor}
                   disabled={isSubmitting}
-                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isSubmitting ? 'Eliminando...' : 'Eliminar'}
                 </button>

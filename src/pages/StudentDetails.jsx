@@ -235,6 +235,12 @@ const StudentDetails = () => {
 
         } catch (err) {
             console.error('❌ Error actualizando estudiante:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de actualización',
+                text: 'No se pudieron actualizar los datos del estudiante',
+                confirmButtonText: 'Entendido'
+            });
             setError('Error al actualizar los datos: ' + err.message);
         } finally {
             setSaving(false);
