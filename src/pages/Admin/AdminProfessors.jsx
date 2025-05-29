@@ -47,6 +47,8 @@ const AdminProfessors = () => {
     disponibilidad: 0
   });
   const [formErrors, setFormErrors] = useState({});
+  const [sortBy, setSortBy] = useState('nombre');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   // ===== EFECTOS =====
   useEffect(() => {
@@ -315,6 +317,66 @@ const AdminProfessors = () => {
     resetForm();
   };
 
+  /**
+   * Ordena la lista de profesores según el criterio seleccionado
+   */
+  const getSortedProfessors = () => {
+    if (!professors || professors.length === 0) return [];
+
+    const sorted = [...professors].sort((a, b) => {
+      let valueA, valueB;
+
+      switch (sortBy) {
+        case 'nombre':
+          valueA = (a.nombre || a.name || '').toLowerCase();
+          valueB = (b.nombre || b.name || '').toLowerCase();
+          break;
+        case 'experiencia':
+          valueA = a.años_experiencia || a.experience || 0;
+          valueB = b.años_experiencia || b.experience || 0;
+          break;
+        case 'evaluacion':
+          valueA = a.evaluacion_docente || a.rating || 0;
+          valueB = b.evaluacion_docente || b.rating || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortBy === 'nombre') {
+        // Para strings
+        if (sortOrder === 'asc') {
+          return valueA.localeCompare(valueB);
+        } else {
+          return valueB.localeCompare(valueA);
+        }
+      } else {
+        // Para números
+        if (sortOrder === 'asc') {
+          return valueA - valueB;
+        } else {
+          return valueB - valueA;
+        }
+      }
+    });
+
+    return sorted;
+  };
+
+  /**
+   * Maneja el cambio de ordenamiento
+   */
+  const handleSortChange = (field) => {
+    if (sortBy === field) {
+      // Si es el mismo campo, cambiar el orden
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Si es un campo diferente, establecer orden ascendente
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
   // ===== RENDERIZADO CONDICIONAL =====
   if (loading) {
     return (
@@ -333,28 +395,96 @@ const AdminProfessors = () => {
         <Header />
 
         <div className="p-8">
-          {/* Título y botón de agregar */}
-          <div className="flex justify-between items-center mb-10">
-            <h1 className="text-3xl font-bold text-teal-600 border-b-2 border-teal-500 pb-2">
-              Administración de Profesores
-            </h1>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors duration-300 flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Agregar Profesor</span>
-            </button>
-          </div>
-
-          {/* Debug: Mostrar cantidad de profesores */}
-          {professors && professors.length === 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
-              <p className="text-yellow-800">No hay profesores registrados en el sistema.</p>
+          {/* Título, contador y controles de ordenamiento */}
+          <div className="mb-10">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-teal-600 border-b-2 border-teal-500 pb-2">
+                  Administración de Profesores
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Total de profesores registrados: <span className="font-semibold text-teal-600">{professors?.length || 0}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors duration-300 flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Agregar Profesor</span>
+              </button>
             </div>
-          )}
+
+            {/* Controles de ordenamiento */}
+            {professors && professors.length > 1 && (
+              <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Ordenar por:</span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleSortChange('nombre')}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1 ${
+                      sortBy === 'nombre' 
+                        ? 'bg-teal-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span>Nombre</span>
+                    {sortBy === 'nombre' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {sortOrder === 'asc' ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        )}
+                      </svg>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSortChange('experiencia')}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1 ${
+                      sortBy === 'experiencia' 
+                        ? 'bg-teal-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span>Experiencia</span>
+                    {sortBy === 'experiencia' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {sortOrder === 'asc' ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        )}
+                      </svg>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSortChange('evaluacion')}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1 ${
+                      sortBy === 'evaluacion' 
+                        ? 'bg-teal-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span>Evaluación</span>
+                    {sortBy === 'evaluacion' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {sortOrder === 'asc' ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        )}
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Tabla de profesores */}
           <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
@@ -370,13 +500,13 @@ const AdminProfessors = () => {
               </thead>
 
               <tbody>
-                {professors && professors.length > 0 ? (
-                  professors.map((professor, index) => {
-                    // Debug: Log cada profesor individualmente
-                    console.log(`👨‍🏫 Profesor ${index}:`, professor);
+              {professors && professors.length > 0 ? (
+                getSortedProfessors().map((professor, index) => {
+                  // Debug: Log cada profesor individualmente
+                  console.log(`👨‍🏫 Profesor ${index}:`, professor);
 
-                    return (
-                      <tr key={professor.nombre || professor.name || index} className="bg-white border-b hover:bg-gray-50">
+                  return (
+                    <tr key={professor.nombre || professor.name || index} className="bg-white border-b hover:bg-gray-50">
                         {/* Imagen */}
                         <td className="py-4 px-6">
                           <div className="relative">
