@@ -27,7 +27,8 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [apiStatus, setApiStatus] = useState({ healthy: false, checking: true });
-    const [isSignUpMode, setIsSignUpMode] = useState(false); // Nuevo estado para alternar entre login y signup
+    const [isSignUpMode, setIsSignUpMode] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); 
 
     // ===== HOOKS Y CONTEXTO =====
     const navigate = useNavigate();
@@ -37,6 +38,13 @@ const Login = () => {
     useEffect(() => {
         checkApiHealth();
     }, []);
+
+    /**
+     * Alterna la visibilidad de la contraseña
+     */
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
 
     // ===== FUNCIONES =====
 
@@ -440,23 +448,61 @@ const Login = () => {
                                     </div>
                                 </div>
 
-                                {/* Campo de contraseña */}
+                                {/* Campo de contraseña con botón para mostrar/ocultar */}
                                 <div>
                                     <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
                                         Contraseña
                                     </label>
-                                    <div className="mt-2">
+                                    <div className="mt-2 relative">
                                         <input
                                             id="password"
                                             name="password"
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
                                             autoComplete="current-password"
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
+                                            className="block w-full rounded-md border-0 py-1.5 px-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6"
                                         />
+                                        
+                                        {/* Botón para mostrar/ocultar contraseña */}
+                                        <button
+                                            type="button"
+                                            onClick={togglePasswordVisibility}
+                                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-teal-600 transition-colors duration-200"
+                                            title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                        >
+                                            {showPassword ? (
+                                                // Icono de ojo cerrado (ocultar)
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                                </svg>
+                                            ) : (
+                                                // Icono de ojo abierto (mostrar)
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            )}
+                                        </button>
                                     </div>
+                                    
+                                    {/* Indicador de fortaleza de contraseña (opcional) */}
+                                    {password && (
+                                        <div className="mt-1">
+                                            <div className="flex space-x-1">
+                                                <div className={`h-1 flex-1 rounded ${password.length >= 4 ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
+                                                <div className={`h-1 flex-1 rounded ${password.length >= 6 ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
+                                                <div className={`h-1 flex-1 rounded ${password.length >= 8 ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {password.length < 4 ? 'Muy débil' : 
+                                                 password.length < 6 ? 'Débil' : 
+                                                 password.length < 8 ? 'Media' : 'Fuerte'}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Botón de envío */}
@@ -492,7 +538,7 @@ const Login = () => {
                             <div className="mt-6 space-y-3">
                                 <div className="text-center">
                                     <span className="text-xs text-gray-500 uppercase tracking-wide">
-                                        Cuentas de demostración
+                                        Cuentas de desarrollo
                                     </span>
                                 </div>
 

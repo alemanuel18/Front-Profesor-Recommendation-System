@@ -326,7 +326,7 @@ const SignUpForm = ({
                 <FormField
                     label="Carnet"
                     name="carnet"
-                    placeholder="12345"
+                    placeholder="25476"
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
@@ -335,7 +335,7 @@ const SignUpForm = ({
                 <FormField
                     label="Pensum"
                     name="pensum"
-                    placeholder="2024"
+                    placeholder="2025"
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
@@ -348,7 +348,7 @@ const SignUpForm = ({
                     label="Correo Electrónico"
                     name="email"
                     type="email"
-                    placeholder="12345@uvg.edu.gt"
+                    placeholder="per25476@uvg.edu.gt"
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}
@@ -460,10 +460,10 @@ const SignUpForm = ({
                 />
 
                 <FormField
-                    label="Cursos con Zona Mínima"
+                    label="Cursos aprobados"
                     name="cursosZonaMinima"
                     type="number"
-                    placeholder="0"
+                    placeholder="6"
                     formData={formData}
                     validationErrors={validationErrors}
                     handleInputChange={handleInputChange}

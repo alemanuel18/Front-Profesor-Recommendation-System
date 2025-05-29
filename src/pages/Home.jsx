@@ -264,59 +264,6 @@ const Home = () => {
                         />
                     </div>
 
-                    {/* Información adicional si se obtuvieron datos de la API */}
-                    {(studentInfo?.estiloAprendizaje || studentInfo?.preferenciaClase || studentInfo?.email) && (
-                        <div className="flex justify-center mt-6">
-                            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 max-w-2xl w-full">
-                                <h3 className="text-lg font-semibold text-teal-700 mb-4">
-                                    Información Adicional del Perfil
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {studentInfo.estiloAprendizaje && (
-                                        <div>
-                                            <span className="text-sm text-gray-600">Estilo de Aprendizaje:</span>
-                                            <p className="font-medium text-gray-900 capitalize">
-                                                {studentInfo.estiloAprendizaje}
-                                            </p>
-                                        </div>
-                                    )}
-                                    {studentInfo.preferenciaClase && (
-                                        <div>
-                                            <span className="text-sm text-gray-600">Preferencia de Clase:</span>
-                                            <p className="font-medium text-gray-900 capitalize">
-                                                {studentInfo.preferenciaClase}
-                                            </p>
-                                        </div>
-                                    )}
-                                    {studentInfo.email && (
-                                        <div className="md:col-span-2">
-                                            <span className="text-sm text-gray-600">Email:</span>
-                                            <p className="font-medium text-gray-900">
-                                                {studentInfo.email}
-                                            </p>
-                                        </div>
-                                    )}
-                                    {studentInfo.puntuacionTotal && (
-                                        <div>
-                                            <span className="text-sm text-gray-600">Puntuación Total:</span>
-                                            <p className="font-medium text-gray-900">
-                                                {studentInfo.puntuacionTotal}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                                {/* {studentInfo.cursosAprobados?.length > 0 && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <span className="text-sm text-gray-600">Cursos Aprobados:</span>
-                                        <p className="font-medium text-gray-900">
-                                            {studentInfo.cursosAprobados.length} cursos completados
-                                        </p>
-                                    </div>
-                                )} */}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Botón para navegar a la página de cursos */}
                     <div className="flex justify-center mt-8">
                         <button

@@ -487,7 +487,7 @@ const StudentDetails = () => {
                                                     Promedio Ciclo Anterior
                                                 </label>
                                                 <p className="text-2xl font-bold text-teal-600">
-                                                    {student.promedio ? student.promedio.toFixed(1) : 'N/A'}
+                                                    {student.promedio ? student.promedio.toFixed(1) : 'N/A'} puntos
                                                 </p>
                                             </div>
 
@@ -502,9 +502,9 @@ const StudentDetails = () => {
                                             {/* Cursos Zona Mínima */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Cursos con Zona Mínima
+                                                    Cursos aprobados el semestre pasado
                                                 </label>
-                                                <p className="text-2xl font-bold text-orange-600">{student.cursos_zona_minima || 0}</p>
+                                                <p className="text-2xl font-bold text-orange-600">{student.cursos_zona_minima || 0} cursos</p>
                                             </div>
                                         </div>
                                     </div>
