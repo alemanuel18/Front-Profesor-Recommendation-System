@@ -644,11 +644,11 @@ const Login = () => {
                                 <div className="mt-8 pt-6 border-t border-white border-opacity-20">
                                     <div className="grid grid-cols-3 gap-4 text-center">
                                         <div className="transform transition-all duration-300 hover:scale-110">
-                                            <div className="text-2xl font-bold text-emerald-300">20+</div>
+                                            <div className="text-2xl font-bold text-emerald-300">100+</div>
                                             <div className="text-xs text-teal-200 uppercase tracking-wide">Estudiantes</div>
                                         </div>
                                         <div className="transform transition-all duration-300 hover:scale-110">
-                                            <div className="text-2xl font-bold text-teal-300">10+</div>
+                                            <div className="text-2xl font-bold text-teal-300">20+</div>
                                             <div className="text-xs text-teal-200 uppercase tracking-wide">Profesores</div>
                                         </div>
                                         <div className="transform transition-all duration-300 hover:scale-110">

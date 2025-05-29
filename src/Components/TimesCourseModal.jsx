@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 
 const TimesCourseModal = ({ isOpen, onClose, onConfirm, course }) => {
-  const [times, setTimes] = useState(1);
+  const [times, setTimes] = useState(0);
 
   if (!isOpen) return null;
 
@@ -26,15 +26,15 @@ const TimesCourseModal = ({ isOpen, onClose, onConfirm, course }) => {
         
         <div className="mb-6">
           <label htmlFor="times" className="block text-sm font-medium text-gray-700 mb-2">
-            Número de veces cursado (1-5)
+            Número de veces cursado (0-5)
           </label>
           <input
             type="number"
             id="times"
-            min="1"
+            min="0"
             max="5"
             value={times}
-            onChange={(e) => setTimes(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))}
+            onChange={(e) => setTimes(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
