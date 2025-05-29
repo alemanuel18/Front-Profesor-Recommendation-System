@@ -272,7 +272,6 @@ class ApiService {
     return this.makeRequest(`/profesores/${encodeURIComponent(nombreProfesor)}/cursos`);
   }
 
-  // MÉTODO CORREGIDO - usando el endpoint correcto de tu API
   async getProfesoresPorCurso(codigoCurso) {
     return this.makeRequest(`/cursos/${encodeURIComponent(codigoCurso)}/profesores`);
   }
